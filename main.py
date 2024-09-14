@@ -39,14 +39,17 @@ from twilio.rest import Client
 # print(send_batch_response)
 
 import requests
+import os
+from dotenv import load_dotenv
 
-servicePlanId = "8826022ed992419fa5240e8e82092989"
-apiToken = "8971830cc8224f82818814940c06bd54"
+load_dotenv()
+servicePlanId = os.environ["PLAN_ID"]
+apiToken = os.environ["API_TOKEN_SMS"]
 sinchNumber = "12066578434"
 toNumber = "12406103742"
 # url = "https://us.sms.api.sinch.com/xms/v1" + servicePlanId + "/batches"
 url = "https://sms.api.sinch.com/xms/v1/8826022ed992419fa5240e8e82092989/batches"
-payload = {"from": sinchNumber, "to": [toNumber], "body": "Hello how are you"}
+payload = {"from": sinchNumber, "to": [toNumber], "body": "Hello are you"}
 
 headers = {"Content-Type": "application/json", "Authorization": "Bearer " + apiToken}
 
