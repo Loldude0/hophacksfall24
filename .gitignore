@@ -5,4 +5,5 @@ test
 .env
 *.png
 *.jpg
+*.jpeg
 .venv
