@@ -56,31 +56,73 @@ def ask_for_info(state: dict) -> str:
     response = model.generate_content(prompt.format(state=state))
     return response.text
 
-def extract_info(question:str, user_response: str, state: dict) -> None:
-    prompt = """
-    extract the data from the patient's response and update the state with the new information.
+def extract_info(question:str, state: dict, is_img: bool = False, **kwargs) -> None:
     
-    doctor's question:
-    {question}
-    
-    current state:
-    {state}
-    
-    user response:
-    {user_response}
-    
-    Fill in or update the state with the new information extracted from the user response.
-    make a key value pair for each piece of information to update the state.
-    do not include any key that are not in the state.
-    
-    example response:
-    {{
-        "temp": 37.5,
-        "soar throat": True
-    }}
     """
+    kwargs:
+    img_path: str
+        image path to the image to extract information from (required if is_img is True)
+    user_response: str
+        user response to the question (required if is_img is False)
+    
+    """
+    
+    
+    if is_img:
+        img_path = kwargs["img_path"]
+        img_file = genai.upload_file(img_path)
+        
+        prompt = """
+        extract the data from the image patient provided, and update the state with the new information.
+    
+        doctor's question:
+        {question}
+        
+        current state:
+        {state}
+        
+        Fill in or update the state with the new information extracted from the image.
+        make a key value pair for each piece of information to update the state.
+        do not include any key that are not in the state.
+        
+        example response:
+        {{
+            "temp": 37.5,
+            "soar throat": True
+        }}
+        
+        """
+        
+        response = model.generate_content([img_file, prompt.format(question=question,state=state)])
+        
+    else:
+        user_response = kwargs["user_response"]
+    
+        prompt = """
+        extract the data from the patient's response and update the state with the new information.
+        
+        doctor's question:
+        {question}
+        
+        current state:
+        {state}
+        
+        user response:
+        {user_response}
+        
+        Fill in or update the state with the new information extracted from the user response.
+        make a key value pair for each piece of information to update the state.
+        do not include any key that are not in the state.
+        
+        example response:
+        {{
+            "temp": 37.5,
+            "soar throat": True
+        }}
+        """
 
-    response = model.generate_content(prompt.format(question=question,state=state, user_response=user_response))
+        response = model.generate_content(prompt.format(question=question,state=state, user_response=user_response))
+    
     response_dict = parse_response_dict(response.text)
     update_user_dict(state, response_dict)
 
@@ -116,7 +158,9 @@ if __name__ == "__main__":
         user_response = input("Enter your response: ")
         if user_response == "exit":
             break
-        extract_info(question, user_response, user_info)
+        extract_info(question, user_info, is_img=False, user_response=user_response)
+        #extract_info(question, user_info, is_img=True, img_path="image.png")
+        print(user_info)
         if all(user_info.values()):
             print("All information has been collected")
             break
