@@ -149,4 +149,18 @@ def get_bot_response():
     else:
         return jsonify({"status": "ok", "message": ask_for_info(user_info)})
 
+@app.route("/search_patient", methods=["GET"])
+def search_patient():
+    patient_name = request.args.get("name")
+    if not patient_name:
+        return jsonify({"status": "error", "message": "Name parameter is required"})
+    
+    patients = user_info.find({"name": {"$regex": f".*{patient_name}.*", "$options": "i"}})
+    patient_list = list(patients)
+    
+    if not patient_list:
+        return jsonify({"status": "error", "message": "No patients found"})
+    
+    return jsonify({"status": "success", "patients": patient_list})
+
 app.run(port=5000)
