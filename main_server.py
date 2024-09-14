@@ -7,7 +7,7 @@ from server_ai_pipeline import diagnose_patient
 from datetime import datetime
 from send_sms import send_sms
 import base64
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from bson.objectid import ObjectId
 
 from get_patient_response import ask_for_info, extract_info, add_extra_questions
@@ -174,12 +174,16 @@ def get_doctor_request():
 
 
 @app.route("/get_bot_response", methods=["POST"])
+@cross_origin()
 def get_bot_response():
-    response_type = request.args.get("response_type")
-    question = request.args.get("question")
-
-    content = request.args.get("content")
-    file_name = request.args.get("file_name")
+    data = request.json
+    response_type = data["response_type"]
+    question = data["question"]
+    content = data["content"]
+    file_name = data["file_name"]
+    
+    print(request.json)
+    print(response_type, question, content, file_name)
     extract_info(
         question,
         state=user_info_client,
