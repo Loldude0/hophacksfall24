@@ -144,7 +144,8 @@ def get_bot_response():
         question = request.args.get("question")
 
         content = request.args.get("content")
-        extract_info(question, state=user_info, response_type=response_type, content=content)
+        file_name = request.args.get("file_name")
+        extract_info(question, state=user_info, response_type=response_type, content=content, file_name=file_name)
     if all(user_info.values()):
         return jsonify({"status": "done", "message": "All information extracted"})
     else:
