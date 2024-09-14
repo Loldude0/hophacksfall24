@@ -19,7 +19,20 @@ fs = gridfs.GridFS(db)
 
 user_info = {
     "temp": None,
-    "soar throat": None
+    "cough": None,
+    "shortness of breath": None,
+    "chest pain": None,
+    "fatigue": None,
+    "headache": None,
+    "nausea": None,
+    "body aches": None,
+    "dizziness": None,
+    "loss of taste": None,
+    "loss of smell": None,
+    "sore throat": None,
+    "congestion": None,
+    "runny nose": None,
+    "diarrhea": None,
 }
 
 @app.route("/get_basic_info", methods=["GET"])
