@@ -15,9 +15,8 @@ def base_64_to_wav(base_64_string: str) -> str:
     audio, sr = sf.read(audio_file)
     sf.write("audio.wav", audio, sr)
 
-def speech_to_text(base_64_string: str) -> str:
-    base_64_to_wav(base_64_string)
-    audio, sr = sf.read("audio.wav")
+def speech_to_text(audio_path: str) -> str:
+    audio, sr = sf.read(audio_path)
     inputs = processor(audio, sampling_rate=sr, return_tensors="pt")
     generated_ids = model.generate(inputs["input_features"], attention_mask=inputs["attention_mask"])
     transcription = processor.batch_decode(generated_ids, skip_special_tokens=True)
@@ -25,4 +24,4 @@ def speech_to_text(base_64_string: str) -> str:
 
 if __name__ == "__main__":
     base_64_string = base64.b64encode(open("./test/output_audio.wav", "rb").read()).decode()
-    print(speech_to_text(base_64_string))
+    print(speech_to_text("audio.wav"))
