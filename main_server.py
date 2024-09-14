@@ -194,6 +194,23 @@ def get_doctor_request():
         {"status": "ok", "is_pending": False, "message": "No pending request"}
     )
 
+@app.route("/get_user_prescription", methods=["GET"])
+def get_user_prescription():
+    user_id = request.args.get("user_id")
+    activity = activity_info.find_one({"_id": user_id})
+    if activity is None:
+        return jsonify({"status": "error", "message": "Activity not found"})
+    else:
+        # find if there is an activity type with status pending
+        prescriptions = []
+        for act in activity["activities"]:
+            if act["activity_type"] == "doctor_prescription":
+                prescriptions.append(act["doctor_note"])
+                
+            return jsonify({"status": "ok", "prescriptions": prescriptions})
+
+    return jsonify({"status": "error", "message": "No prescription found"})
+
 
 @app.route("/get_bot_response", methods=["POST"])
 @cross_origin()
