@@ -173,7 +173,7 @@ def get_doctor_request():
     )
 
 
-@app.route("/get_bot_response", methods=["GET"])
+@app.route("/get_bot_response", methods=["POST"])
 def get_bot_response():
     response_type = request.args.get("response_type")
     question = request.args.get("question")

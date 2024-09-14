@@ -8,6 +8,5 @@ transformers
 sentencepiece
 librosa
 flask
-falsk-cors
+flask-cors
 pymongo
-gridfs

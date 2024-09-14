@@ -43,7 +43,7 @@ export default function HealthChatInterface() {
   const getBotResponse = async (content: string, type: string, file_name: string) => {
     try {
       const response = await fetch('http://localhost:5000/get_bot_response', {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -76,7 +76,6 @@ export default function HealthChatInterface() {
         content: inputText,
         sender: 'user'
       }
-      const currentMessages = messages
       setMessages(prev => [...prev, newMessage])
       setInputText('')
       getBotResponse(inputText, "", '')
