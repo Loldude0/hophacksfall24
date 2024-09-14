@@ -3,6 +3,7 @@ import json
 import base64
 import random
 from datetime import datetime
+from bson.objectid import ObjectId
 
 # Server URL
 BASE_URL = "http://localhost:5000"  # Replace with your server URL
@@ -13,8 +14,8 @@ temp = 1
 def generate_fake_user_data():
     global temp
     user_data = {
-        "user_id": temp,
-        "name": f"Test User {random.randint(1, 100)}",
+        "user_id": str(ObjectId()),
+        "name": f"Test User {temp}",
         "age": random.randint(18, 90),
         "sex": random.choice(["Male", "Female"]),
         "height": random.randint(150, 200),  # height in cm
@@ -98,7 +99,7 @@ if __name__ == "__main__":
             activity_types = ["user_session", "doctor_notes", "doctor_diagnosis", "doctor_prescription", "more_info_request"]
 
             # Choose random number of activities for each user (between 3 and 10)
-            num_activities = random.randint(3, 10)
+            num_activities = random.randint(1,10)
 
             # Generate random activities for each user
             for _ in range(num_activities):
