@@ -22,7 +22,7 @@ def generate_fake_user_data():
         "weight": random.randint(50, 120),  # weight in kg
         "blood_type": random.choice(["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]),
         "email": f"test{random.randint(1, 100)}@example.com",
-        "phone_number": f"+1234567890{random.randint(10, 99)}",
+        "phone_number": f"12406103742",
         "address": f"Street {random.randint(1, 100)}, City {random.randint(1, 100)}"
     }
     temp += 1
@@ -33,7 +33,7 @@ def generate_fake_activity_data(user_id, activity_type):
     activity_data = {
         "user_id": user_id,
         "activity_type": activity_type,
-        "timestamp": str(datetime.now())
+        "timestamp": random.randint(1612137600, 1614556800)
     }
 
     if activity_type == "user_session":

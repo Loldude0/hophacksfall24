@@ -101,6 +101,7 @@ def get_activity_info():
                     image_data = fs.get(image).read()
                     images.append(base64.b64encode(image_data).decode("utf-8"))
                 act["images"] = images
+        activity["activities"] = activity["activities"][::-1]
     return jsonify(activity)
 
 
