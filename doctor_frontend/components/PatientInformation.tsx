@@ -83,7 +83,7 @@ export default function PatientInformation() {
 
       {searchResults.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Search Results</h2>
+            <h2 className="text-2xl font-bold text-black mb-4">Search Results</h2>
             <div className="space-y-4">
               {searchResults.map((patient, index) => (
                 <Card key={index} className="p-4 cursor-pointer" onClick={() => handlePatientSelect(patient._id)}>
@@ -105,9 +105,9 @@ export default function PatientInformation() {
 
       <div className="flex">
         <div className="w-1/3 pr-4">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Patient Information</h2>
+          <h2 className="text-xl font-semibold text-black mb-4">Patient Information</h2>
           {patientInfo ? (
-            <div className="space-y-2">
+            <div className="text-black space-y-2">
               <p><strong>Name:</strong> {patientInfo.name}</p>
               <p><strong>Age:</strong> {patientInfo.age}</p>
               <p><strong>Sex:</strong> {patientInfo.sex}</p>

@@ -136,19 +136,19 @@ export default function PatientTimeline({ selectedPatientId }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Patient Timeline</h2>
+      <h2 className="text-2xl font-bold text-black mb-4">Patient Timeline</h2>
       <Button onClick={handleAddActivity} className="mb-4">Add Activity</Button>
 
       {showAddActivityForm && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white p-8 rounded-lg shadow-lg">
-              <h2 className="text-xl font-semibold mb-4">Add Activity</h2>
+              <h2 className="text-xl font-semibold text-black mb-4">Add Activity</h2>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Activity Type</label>
+                <label className="block text-sm font-medium text-black">Activity Type</label>
                 <select
                   value={activityType}
                   onChange={(e) => setActivityType(e.target.value)}
-                  className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 block text-black w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 >
                   <option value="doctor_notes">Doctor Notes</option>
                   <option value="doctor_diagnosis">Doctor Diagnosis</option>
@@ -157,7 +157,7 @@ export default function PatientTimeline({ selectedPatientId }) {
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Doctor's Note</label>
+                <label className="block text-sm font-medium text-black">Doctor's Note</label>
                 <textarea
                   value={doctorNote}
                   onChange={(e) => setDoctorNote(e.target.value)}
@@ -166,7 +166,7 @@ export default function PatientTimeline({ selectedPatientId }) {
               </div>
               {activityType === 'doctor_diagnosis' && (
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Diagnosis</label>
+                  <label className="block text-sm font-medium text-black">Diagnosis</label>
                   <textarea
                     value={diagnosis}
                     onChange={(e) => setDiagnosis(e.target.value)}
@@ -174,7 +174,7 @@ export default function PatientTimeline({ selectedPatientId }) {
                   />
                 </div>
               )}
-              <div className="flex justify-end space-x-4">
+              <div className="flex justify-end space-x-4 text-black">
                 <Button variant="outline" onClick={() => setShowAddActivityForm(false)}>Cancel</Button>
                 <Button onClick={handleSubmitActivity}>Submit</Button>
               </div>
