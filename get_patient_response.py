@@ -4,6 +4,8 @@ import ast
 import re
 import os
 
+from speech_to_text import speech_to_text
+
 load_dotenv()
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 model = genai.GenerativeModel('gemini-1.5-flash')
@@ -53,20 +55,22 @@ def ask_for_info(state: dict) -> str:
     response = model.generate_content(prompt.format(state=state))
     return response.text
 
-def extract_info(question:str, state: dict, is_img: bool = False, **kwargs) -> None:
+def extract_info(question:str, state: dict, response_type: str = "text", **kwargs) -> None:
     
     """
     kwargs:
     img_path: str
-        image path to the image to extract information from (required if is_img is True)
+        image path to the image to extract information from (required if response_type = "image")
+    audio_path: str
+        audio path to the audio to extract information from (required if response_type = "audio")
     user_response: str
-        user response to the question (required if is_img is False)
+        user response to the question (required if response_type = "text")
     
     """
     
     
-    if is_img:
-        img_path = kwargs["img_path"]
+    if response_type == "image":
+        img_path = kwargs["content"]
         img_file = genai.upload_file(img_path)
         
         prompt = """
@@ -92,8 +96,10 @@ def extract_info(question:str, state: dict, is_img: bool = False, **kwargs) -> N
         
         response = model.generate_content([img_file, prompt.format(question=question,state=state)])
         
-    else:
-        user_response = kwargs["user_response"]
+    elif response_type == "text" or response_type == "audio":
+        user_response = kwargs["content"]
+        if response_type == "audio":
+            user_response = speech_to_text(user_response)
     
         prompt = """
         extract the data from the patient's response and update the state with the new information.
@@ -119,6 +125,9 @@ def extract_info(question:str, state: dict, is_img: bool = False, **kwargs) -> N
         """
 
         response = model.generate_content(prompt.format(question=question,state=state, user_response=user_response))
+    
+    else:
+        raise ValueError("Invalid response type '{}'".format(response_type))
     
     response_dict = parse_response_dict(response.text)
     update_user_dict(state, response_dict)
