@@ -215,10 +215,14 @@ def get_user_prescription():
 @app.route("/get_patient_addresses", methods=["GET"])
 def get_patient_addresses():
     patients = user_info.find()
-    addresses = []
+    markers = []
     for patient in patients:
-        addresses.append(patient["address"])
-    return jsonify({"status": "ok", "addresses": addresses})
+        markers.append({
+            "name": patient["name"],
+            "address": patient["address"]
+        })
+
+    return jsonify({"status": "ok", "addresses": markers})
 
 @app.route("/get_bot_response", methods=["POST"])
 @cross_origin()
