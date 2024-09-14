@@ -11,7 +11,7 @@ export default function PatientInformation() {
   const [searchQuery, setSearchQuery] = useState('')
   const [patientInfo, setPatientInfo] = useState(null)
   const [searchResults, setSearchResults] = useState([])
-  const [selectedPatientId, setSelectedPatientId] = useState('1')
+  const [selectedPatientId, setSelectedPatientId] = useState(null)
 
   useEffect(() => {
     console.log('Fetching patient basic information...');

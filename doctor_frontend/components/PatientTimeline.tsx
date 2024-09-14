@@ -137,8 +137,8 @@ export default function PatientTimeline({ selectedPatientId }) {
   return (
     <div>
       <h2 className="text-2xl font-bold text-black mb-4">Patient Timeline</h2>
-      <Button onClick={handleAddActivity} className="mb-4">Add Activity</Button>
-
+      {selectedPatientId && (<Button onClick={handleAddActivity} className="mb-4">Add Activity</Button>)}
+      
       {showAddActivityForm && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white p-8 rounded-lg shadow-lg">
