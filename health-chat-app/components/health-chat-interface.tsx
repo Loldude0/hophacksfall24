@@ -14,14 +14,7 @@ type Message = {
 }
 
 export default function HealthChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 0,
-      type: 'text',
-      content: "Can I please know your symptoms?",
-      sender: 'system'
-    }
-  ])
+  const [messages, setMessages] = useState<Message[]>([])
   const [inputText, setInputText] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [audioURL, setAudioURL] = useState<string | null>(null)
@@ -39,6 +32,45 @@ export default function HealthChatInterface() {
       if (audioURL) URL.revokeObjectURL(audioURL)
     }
   }, [audioURL])
+
+  const getDoctorRequest = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/get_doctor_request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // TODO: add user_id
+        // TODO: currently hardcoded to user_id = 1
+        body: JSON.stringify({ user_id: 1 }),
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      if (data.is_pending) {
+        const newMessage: Message = {
+          id: Date.now(),
+          type: 'text',
+          content: data.message,
+          sender: 'system',
+        };
+
+      } else {
+        const newMessage: Message = {
+          id: Date.now(),
+          type: 'text',
+          content: "Please provide information about your symptoms",
+          sender: 'system',
+        };
+      }
+      setMessages(prev => [...prev, newMessage]);
+      setPrevResponse(data.message);
+    }
+    catch (error) {
+      console.error('Error fetching bot response:', error);
+    }
+  }
 
   const getBotResponse = async (content: string, type: string, file_name: string) => {
     try {
@@ -144,6 +176,10 @@ export default function HealthChatInterface() {
       setIsRecording(false)
     }
   }
+
+
+  //initialize the chat
+  getDoctorRequest();
 
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background">

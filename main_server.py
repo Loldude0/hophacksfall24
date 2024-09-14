@@ -139,9 +139,10 @@ def post_activity_info():
     return jsonify({"status": "success", "message": "Activity created"})
 
 
-@app.route("/get_doctor_request", methods=["GET"])
+@app.route("/get_doctor_request", methods=["POST"])
 def get_doctor_request():
-    user_id = request.args.get("user_id")
+    data = request.json
+    user_id = data["user_id"]
     activity = activity_info.find_one({"_id": user_id})
     if activity is None:
         return jsonify({"status": "error", "message": "Activity not found"})
