@@ -1,2 +1,9 @@
 google-generativeai
 python-dotenv
+torch
+torchaudio
+transformers
+datasets
+transformers
+sentencepiece
+librosa
