@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {Routes, Route, BrowserRouter} from 'react-router-dom'
 
 export default function UserInfoPage() {
   const router = useRouter()
@@ -17,7 +18,7 @@ export default function UserInfoPage() {
     height: '',
     weight: ''
   })
-
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserInfo({ ...userInfo, [e.target.name]: e.target.value })
   }
@@ -31,7 +32,8 @@ export default function UserInfoPage() {
     // Store user info in localStorage
     localStorage.setItem('userInfo', JSON.stringify(userInfo))
     // Navigate to chat page
-    router.push('')
+    router.push('/health-chat')
+    
   }
 
   return (
