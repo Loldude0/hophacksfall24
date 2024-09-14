@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps"
 
 const Dialog = ({ marker, onClose }) => (
@@ -15,15 +15,26 @@ const Dialog = ({ marker, onClose }) => (
 
 export default function DiseaseMap() {
     const geoUrl = "/india.json";
-    const markers = [
-        { name: "Test User 1", coordinates: [77.2090, 28.6139] },
-        { name: "Test User 2", coordinates: [72.8777, 19.0760] },
-        { name: "Test User 3", coordinates: [77.5946, 12.9716] },
-    ];
-
+    
+    const [markers, setMarkers] = useState([]);
     const [selectedMarker, setSelectedMarker] = useState(null);
     const [zoom, setZoom] = useState(1);
     const [center, setCenter] = useState([78.9629, 20.5937]);
+
+    useEffect(() => {
+        fetch('http://localhost:5000/get_patient_addresses')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "ok") {
+                    setMarkers(data.addresses);
+                } else {
+                    console.error(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching patient addresses:', error);
+            });
+    }, []);
 
     const handleMarkerClick = (marker) => {
         setSelectedMarker(marker);

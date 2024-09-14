@@ -218,8 +218,8 @@ def get_patient_addresses():
     markers = []
     for patient in patients:
         markers.append({
-            "name": patient["name"],
-            "address": patient["address"]
+            "name": patient["_id"],
+            "coordinates": patient["address"],
         })
 
     return jsonify({"status": "ok", "addresses": markers})
