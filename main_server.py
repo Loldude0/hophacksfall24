@@ -140,12 +140,11 @@ def get_doctor_request():
 def get_bot_response():
     initial_message = request.args.get("initial_message")
     if not initial_message:
-        is_img = request.args.get("is_img")
+        response_type = request.args.get("response_type")
         question = request.args.get("question")
-        
-        img_path = request.args.get("img_path")
-        user_response = request.args.get("user_response")
-        extract_info(question, user_info, is_img=is_img, img_path=img_path, user_response=user_response)
+
+        content = request.args.get("content")
+        extract_info(question, state=user_info, response_type=response_type, content=content)
     if all(user_info.values()):
         return jsonify({"status": "done", "message": "All information extracted"})
     else:
