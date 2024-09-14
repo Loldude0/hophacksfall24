@@ -2,7 +2,6 @@ test
 *.wav
 *.mp3
 *.mp4
+.env
 *.png
 *.jpg
-*.jpeg
-.env
