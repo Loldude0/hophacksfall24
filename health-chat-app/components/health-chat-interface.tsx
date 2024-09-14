@@ -42,7 +42,7 @@ export default function HealthChatInterface() {
         },
         // TODO: add user_id
         // TODO: currently hardcoded to user_id = 1
-        body: JSON.stringify({ user_id: 1 }),
+        body: JSON.stringify({ user_id: 0 }),
       });
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -55,6 +55,8 @@ export default function HealthChatInterface() {
           content: data.message,
           sender: 'system',
         };
+        setMessages(prev => [...prev, newMessage]);
+        setPrevResponse(data.message);
 
       } else {
         const newMessage: Message = {
@@ -63,9 +65,11 @@ export default function HealthChatInterface() {
           content: "Please provide information about your symptoms",
           sender: 'system',
         };
+
+        setMessages(prev => [...prev, newMessage]);
+        setPrevResponse(data.message);
       }
-      setMessages(prev => [...prev, newMessage]);
-      setPrevResponse(data.message);
+      
     }
     catch (error) {
       console.error('Error fetching bot response:', error);
