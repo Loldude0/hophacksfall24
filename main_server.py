@@ -20,9 +20,8 @@ user_info = db["user_info"]
 activity_info = db["activity_info"]
 fs = gridfs.GridFS(db)
 CORS(app)
-user_info_client = {"temp": None, "soar throat": None}
 
-user_info = {
+user_info_client = {
     "temp": None,
     "cough": None,
     "shortness of breath": None,
@@ -191,6 +190,7 @@ def get_bot_response():
         content=content,
         file_name=file_name,
     )
+    print(user_info_client)
     if all(user_info_client.values()):
         return jsonify({"status": "done", "message": "All information extracted"})
     else:
