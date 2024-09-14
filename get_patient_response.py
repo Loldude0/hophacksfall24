@@ -8,10 +8,7 @@ load_dotenv()
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-user_info = {
-    "temp": None,
-    "soar throat": None
-}
+
 
 def update_user_dict(user_dict: dict, response_dict: dict) -> None:
     for key in response_dict:
@@ -126,7 +123,7 @@ def extract_info(question:str, state: dict, is_img: bool = False, **kwargs) -> N
     response_dict = parse_response_dict(response.text)
     update_user_dict(state, response_dict)
 
-def extra_questions(question: str, user_state: dict) -> None:
+def add_extra_questions(question: str, user_state: dict) -> None:
     prompt = """
     create a list of extra states to ask the patient based on the current state of the patient.
     
@@ -152,6 +149,10 @@ def extra_questions(question: str, user_state: dict) -> None:
     expand_user_dict(user_state, response_list)
 
 if __name__ == "__main__":
+    user_info = {
+    "temp": None,
+    "soar throat": None
+    }
     while True:
         question = ask_for_info(user_info)
         print(question)

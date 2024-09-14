@@ -3,4 +3,5 @@ test
 *.mp3
 *.mp4
 .env
-.env
+*.png
+*.jpg
