@@ -25,6 +25,7 @@ export default function HealthChatInterface() {
   const [inputText, setInputText] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [audioURL, setAudioURL] = useState<string | null>(null)
+  const [prevResponse, setPrevResponse] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -39,6 +40,34 @@ export default function HealthChatInterface() {
     }
   }, [audioURL])
 
+  const getBotResponse = async (content: string, type: string, file_name: string) => {
+    try {
+      const response = await fetch('http://localhost:5000/get_bot_response', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ question: prevResponse, response_type: type, content: content , file_name: file_name }),
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      // TODO: add handling to stauts = done
+
+      const newMessage: Message = {
+        id: Date.now(),
+        type: 'text',
+        content: data.message, // Assuming the response has a 'message' field
+        sender: 'system',
+      };
+      setMessages(prev => [...prev, newMessage]);
+      setPrevResponse(data.message);
+    } catch (error) {
+      console.error('Error fetching bot response:', error);
+    }
+  }
+
   const handleSendMessage = () => {
     if (inputText.trim()) {
       const newMessage: Message = {
@@ -47,8 +76,10 @@ export default function HealthChatInterface() {
         content: inputText,
         sender: 'user'
       }
+      const currentMessages = messages
       setMessages(prev => [...prev, newMessage])
       setInputText('')
+      getBotResponse(inputText, "", '')
     }
   }
 
@@ -57,13 +88,15 @@ export default function HealthChatInterface() {
     if (file) {
       const reader = new FileReader()
       reader.onload = (e) => {
+        const base64Image = e.target?.result as string
         const newMessage: Message = {
           id: Date.now(),
           type: 'image',
-          content: e.target?.result as string,
+          content: base64Image,
           sender: 'user'
         }
         setMessages(prev => [...prev, newMessage])
+        getBotResponse(base64Image, "image", file.name)
       }
       reader.readAsDataURL(file)
     }
@@ -91,6 +124,12 @@ export default function HealthChatInterface() {
           sender: 'user'
         }
         setMessages(prev => [...prev, newMessage])
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          const base64Audio = reader.result as string
+          getBotResponse(base64Audio, "audio", 'audio.wav')
+        }
+        reader.readAsDataURL(audioBlob)
       }
 
       mediaRecorder.start()
