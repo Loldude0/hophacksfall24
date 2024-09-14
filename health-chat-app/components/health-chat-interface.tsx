@@ -22,6 +22,21 @@ export default function HealthChatInterface() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const userInfo = localStorage.getItem('userInfo')
+    if (userInfo) {
+      const { userId } = JSON.parse(userInfo)
+      setUserId(userId)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (userId) {
+      getDoctorRequest()
+    }
+  }, [userId])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -35,44 +50,42 @@ export default function HealthChatInterface() {
 
   const getDoctorRequest = async () => {
     try {
+      console.log(userId)
       const response = await fetch('http://localhost:5000/get_doctor_request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        // TODO: add user_id
-        // TODO: currently hardcoded to user_id = "66e58f396d182df4b6dd514c"
-        body: JSON.stringify({ user_id: "66e58f396d182df4b6dd514c" }),
-      });
+        body: JSON.stringify({ user_id: userId }),
+      })
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error('Network response was not ok')
       }
-      const data = await response.json();
+      const data = await response.json()
+      console.log(data.is_pending)
       if (data.is_pending) {
         const newMessage: Message = {
           id: Date.now(),
           type: 'text',
           content: data.message,
           sender: 'system',
-        };
-        setMessages(prev => [...prev, newMessage]);
-        setPrevResponse(data.message);
-
+        }
+        setMessages(prev => [...prev, newMessage])
+        setPrevResponse(data.message)
+        console.log(data.message)
       } else {
+        console.log("didnt work lmao")
         const newMessage: Message = {
           id: Date.now(),
           type: 'text',
           content: "Please provide information about your symptoms",
           sender: 'system',
-        };
-
-        setMessages(prev => [...prev, newMessage]);
-        setPrevResponse(data.message);
+        }
+        setMessages(prev => [...prev, newMessage])
+        setPrevResponse(data.message)
       }
-      
-    }
-    catch (error) {
-      console.error('Error fetching bot response:', error);
+    } catch (error) {
+      console.error('Error fetching bot response:', error)
     }
   }
 
@@ -83,24 +96,22 @@ export default function HealthChatInterface() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ question: prevResponse, response_type: type, content: content , file_name: file_name }),
-      });
+        body: JSON.stringify({ question: prevResponse, response_type: type, content: content, file_name: file_name, user_id: userId }),
+      })
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error('Network response was not ok')
       }
-      const data = await response.json();
-      // TODO: add handling to stauts = done
-
+      const data = await response.json()
       const newMessage: Message = {
         id: Date.now(),
         type: 'text',
-        content: data.message, // Assuming the response has a 'message' field
+        content: data.message,
         sender: 'system',
-      };
-      setMessages(prev => [...prev, newMessage]);
-      setPrevResponse(data.message);
+      }
+      setMessages(prev => [...prev, newMessage])
+      setPrevResponse(data.message)
     } catch (error) {
-      console.error('Error fetching bot response:', error);
+      console.error('Error fetching bot response:', error)
     }
   }
 
@@ -162,7 +173,8 @@ export default function HealthChatInterface() {
         const reader = new FileReader()
         reader.onloadend = () => {
           const base64Audio = reader.result as string
-          getBotResponse(base64Audio, "audio", 'audio.wav')
+          const uniqueFileName = `audio_${new Date().toISOString().replace(/[:.]/g, '-')}.wav`
+          getBotResponse(base64Audio, "audio", uniqueFileName)
         }
         reader.readAsDataURL(audioBlob)
       }
@@ -180,10 +192,6 @@ export default function HealthChatInterface() {
       setIsRecording(false)
     }
   }
-
-
-  //initialize the chat
-  getDoctorRequest();
 
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background">

@@ -9,6 +9,8 @@ from send_sms import send_sms
 import base64
 from flask_cors import CORS, cross_origin
 from bson.objectid import ObjectId
+import requests
+import os
 
 from get_patient_response import ask_for_info, extract_info, add_extra_questions
 
@@ -20,7 +22,7 @@ user_info = db["user_info"]
 activity_info = db["activity_info"]
 fs = gridfs.GridFS(db)
 CORS(app)
-
+"""
 user_info_client = {
     "temp": None,
     "cough": None,
@@ -38,6 +40,24 @@ user_info_client = {
     "runny nose": None,
     "diarrhea": None,
 }
+"""
+
+user_info_client = {
+    "temp": None,
+    "cough": None,
+    "shortness of breath": None,
+    "chest pain": None,
+}
+
+def convert_all_images_to_base64():
+    files = os.listdir("./media/images")
+    res = []
+    for file in files:
+        with open(f"./media/images/{file}", "rb") as f:
+            img_base64 = base64.b64encode(f.read()).decode("utf-8")
+            res.append(img_base64)
+    
+    return res
 
 @app.route("/get_basic_info", methods=["GET"])
 def get_basic_info():
@@ -91,10 +111,12 @@ def post_activity_info():
     activity = activity_info.find_one({"_id": user_id})
     if activity is not None:
         activities = activity["activities"]
+        print("exists")
     else:
         activities = []
     request.json["timestamp"] = datetime.now()
-    user_number = user_info.find({"_id": user_id})[0]["phone_number"]
+    print(user_info.find({"_id": user_id}))
+    user_number = user_info.find_one({"_id": user_id})["phone_number"]
 
     if activity_type == "user_session":
         state = request.json["state"]
@@ -113,7 +135,6 @@ def post_activity_info():
         # TODO: do something for the analytics on the map later
         pass
     elif activity_type == "doctor_prescription":
-        user_number = user_info.find({"_id": user_id})[0]["phone_number"]
         send_sms(
             user_number, "You have a new prescription: " + request.json["doctor_note"]
         )
@@ -122,7 +143,6 @@ def post_activity_info():
         # TODO: implement a live meeting using something
         pass
     elif activity_type == "more_info_request":
-        user_number = user_info.find({"_id": user_id})[0]["phone_number"]
         send_sms(
             user_number,
             "You have a new request from your doctor: " + request.json["doctor_note"],
@@ -165,6 +185,7 @@ def get_doctor_request():
                         "status": "ok",
                         "is_pending": True,
                         "message": ask_for_info(user_info_client),
+                        "phone_number": "12406103742"
                     }
                 )
 
@@ -192,7 +213,19 @@ def get_bot_response():
         file_name=file_name,
     )
     print(user_info_client)
-    if all(user_info_client.values()):
+    if all([value is not None for value in user_info_client.values()]):
+        # post activity info by calling the post_activity_info function and passing in the necessary parameters
+        user_id = data["user_id"]
+        requests.post(
+            "http://localhost:5000/post_activity_info",
+            json={
+                "user_id": user_id,
+                "activity_type": "user_session",
+                "state": user_info_client,
+                "images": convert_all_images_to_base64(),
+            },
+        )
+        os.rmdir("./media")
         return jsonify({"status": "done", "message": "All information extracted"})
     else:
         return jsonify({"status": "ok", "message": ask_for_info(user_info_client)})

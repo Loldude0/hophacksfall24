@@ -1,13 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { redirect, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {Routes, Route, BrowserRouter} from 'react-router-dom'
 
 export default function UserInfoPage() {
   const router = useRouter()
@@ -18,7 +17,9 @@ export default function UserInfoPage() {
     height: '',
     weight: ''
   })
-  
+  const [userId, setUserId] = useState(null)
+  const [error, setError] = useState(null)
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserInfo({ ...userInfo, [e.target.name]: e.target.value })
   }
@@ -27,13 +28,35 @@ export default function UserInfoPage() {
     setUserInfo({ ...userInfo, sex: value })
   }
 
+  const handleSearch = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/search_patient?name=${userInfo.name}`)
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+      const data = await response.json()
+      if (data.status === 'success' && data.patients.length > 0) {
+        setUserId(data.patients[0]._id)
+        setError(null)
+      } else {
+        setError('No patients found')
+      }
+    } catch (error) {
+      console.error('Error searching for patient:', error)
+      setError('Error searching for patient')
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!userId) {
+      setError('Please search for a patient first')
+      return
+    }
     // Store user info in localStorage
-    localStorage.setItem('userInfo', JSON.stringify(userInfo))
+    localStorage.setItem('userInfo', JSON.stringify({ ...userInfo, userId }))
     // Navigate to chat page
     router.push('/health-chat')
-    
   }
 
   return (
@@ -47,7 +70,11 @@ export default function UserInfoPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" name="name" value={userInfo.name} onChange={handleChange} required />
+              <div className="flex space-x-2">
+                <Input id="name" name="name" value={userInfo.name} onChange={handleChange} required />
+                <Button type="button" onClick={handleSearch}>Search</Button>
+              </div>
+              {error && <p className="text-red-500">{error}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="sex">Sex</Label>

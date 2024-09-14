@@ -5,14 +5,26 @@ import re
 import os
 
 from speech_to_text import speech_to_text, base_64_to_audio
+import base64
 
 load_dotenv()
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-def base_64_to_img(base_64_string: str, extension: str, dst_dir: str) -> str:
-    #TODO: Implement this function
-    pass
+def correct_base64_string(base64_string: str) -> str:
+    pattern = r'data:image/[^;]*;base64,(.*)'
+    match = re.search(pattern, base64_string)
+    if match:
+        return match.group(1)
+    return base64_string
+
+def base_64_to_img(base_64_string: str, dst_dir: str) -> str:
+    base_64_string = correct_base64_string(base_64_string)
+
+    img_data = base64.b64decode(base_64_string)
+    with open(dst_dir, 'wb') as f:
+        f.write(img_data)
+    return dst_dir
 
 def update_user_dict(user_dict: dict, response_dict: dict) -> None:
     for key in response_dict:
@@ -69,14 +81,18 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
         user response to the question (required if response_type = "text")
     
     """
-    
+    if not os.path.exists("./media"):
+        os.makedirs("./media")
+        os.makedirs("./media/images")
+        os.makedirs("./media/audio")
     
     if response_type == "image":
         base64_img = kwargs["content"]
         file_name = kwargs["file_name"]
-        extension = file_name.split(".")[-1]
-        dst_dir = f"./media/img.{extension}"
-        base_64_to_img(base64_img, extension, dst_dir)
+        dst_dir = f"./media/images/{file_name}"
+        print(dst_dir)
+        print(base64_img)
+        base_64_to_img(base64_img, dst_dir)
         img_file = genai.upload_file(dst_dir)
         
         prompt = """
@@ -109,7 +125,7 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
             base64_audio = kwargs["content"]
             file_name = kwargs["file_name"]
             extension = file_name.split(".")[-1]
-            dst_dir = f"./media/audio.{extension}"
+            dst_dir = f"./media/audio/{file_name}"
             base_64_to_audio(base64_audio, extension, dst_dir)
             user_response = speech_to_text(dst_dir)
     
