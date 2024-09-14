@@ -4,13 +4,15 @@ import ast
 import re
 import os
 
-from speech_to_text import speech_to_text
+from speech_to_text import speech_to_text, base_64_to_audio
 
 load_dotenv()
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-
+def base_64_to_img(base_64_string: str, extension: str, dst_dir: str) -> str:
+    #TODO: Implement this function
+    pass
 
 def update_user_dict(user_dict: dict, response_dict: dict) -> None:
     for key in response_dict:
@@ -70,8 +72,12 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
     
     
     if response_type == "image":
-        img_path = kwargs["content"]
-        img_file = genai.upload_file(img_path)
+        base64_img = kwargs["content"]
+        file_name = kwargs["file_name"]
+        extension = file_name.split(".")[-1]
+        dst_dir = f"./media/img.{extension}"
+        base_64_to_img(base64_img, extension, dst_dir)
+        img_file = genai.upload_file(dst_dir)
         
         prompt = """
         extract the data from the image patient provided, and update the state with the new information.
@@ -97,9 +103,15 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
         response = model.generate_content([img_file, prompt.format(question=question,state=state)])
         
     elif response_type == "text" or response_type == "audio":
-        user_response = kwargs["content"]
-        if response_type == "audio":
-            user_response = speech_to_text(user_response)
+        if response_type == "text":
+            user_response = kwargs["content"]
+        else:
+            base64_audio = kwargs["content"]
+            file_name = kwargs["file_name"]
+            extension = file_name.split(".")[-1]
+            dst_dir = f"./media/audio.{extension}"
+            base_64_to_audio(base64_audio, extension, dst_dir)
+            user_response = speech_to_text(dst_dir)
     
         prompt = """
         extract the data from the patient's response and update the state with the new information.

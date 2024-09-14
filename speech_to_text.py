@@ -7,13 +7,12 @@ import soundfile as sf
 model = Speech2TextForConditionalGeneration.from_pretrained("facebook/s2t-small-librispeech-asr")
 processor = Speech2TextProcessor.from_pretrained("facebook/s2t-small-librispeech-asr")
 
-def base_64_to_wav(base_64_string: str) -> str:
+def base_64_to_audio(base_64_string: str, extension: str, dst_dir: str) -> str:
     
-
     audio_bytes = base64.b64decode(base_64_string)
     audio_file = io.BytesIO(audio_bytes)
     audio, sr = sf.read(audio_file)
-    sf.write("audio.wav", audio, sr)
+    sf.write(dst_dir, audio, sr)
 
 def speech_to_text(audio_path: str) -> str:
     audio, sr = sf.read(audio_path)
