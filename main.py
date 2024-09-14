@@ -3,26 +3,18 @@ import os
 from twilio.rest import Client
 
 
-# account_sid = "AC050fb015aabc6c5a792e0dd722d61389"
-# auth_token = "6642c4bc309d8ebc179692033337ea5a"
-# client = Client(account_sid, auth_token)
+app = Flask(__name__)
 
-# # message = client.messages.create(
-# #     from_="+18446207028", body="Hello      Twilio", to="+12405013759"
-# # )
 
-# # print(message.sid)
-# available_numbers = client.available_phone_numbers("US").local.list(
-#     area_code=123, limit=20
-# )
-# number = client.incoming_phone_numbers.create(
-#     phone_number=available_numbers[0].phone_number
-# )
-# print(available_numbers)
-# Install deps with: pip install requests
+account_sid = "AC050fb015aabc6c5a792e0dd722d61389"
+auth_token = "6642c4bc309d8ebc179692033337ea5a"
+client = Client(account_sid, auth_token)
 
-# from sinch import SinchClient
+message = client.messages.create(
+    from_="+18446207028", body="Hello      Twilio", to="+12406103742"
+)
 
+<<<<<<< HEAD
 # sinch_client = SinchClient(
 #     key_id="86c67138-f1a9-4470-83b1-8b769644d022",
 #     key_secret="O~eaNFFF6YQ3lhJH3lK_s8xWh3",
@@ -57,3 +49,6 @@ response = requests.post(url, json=payload, headers=headers)
 
 data = response.json()
 print(data)
+=======
+print(message.sid)
+>>>>>>> 05da83d (flask set up)
