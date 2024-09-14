@@ -73,6 +73,7 @@ export default function PatientInformation() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1"
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
             <Button size="icon" onClick={handleSearch}>
               <Search className="h-4 w-4" />
@@ -104,7 +105,7 @@ export default function PatientInformation() {
         )}
 
       <div className="flex">
-        <div className="w-1/3 pr-4">
+        <div className="w-1/5 pr-4">
           <h2 className="text-xl font-semibold text-black mb-4">Patient Information</h2>
           {patientInfo ? (
             <div className="text-black space-y-2">
@@ -119,7 +120,7 @@ export default function PatientInformation() {
             <p>Loading patient information...</p>
           )}
         </div>
-        <div className="w-2/3">
+        <div className="w-4/5">
           <PatientTimeline selectedPatientId={selectedPatientId} />
         </div>
       </div>
