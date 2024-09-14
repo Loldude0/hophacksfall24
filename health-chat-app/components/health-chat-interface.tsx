@@ -78,7 +78,7 @@ export default function HealthChatInterface() {
       }
       setMessages(prev => [...prev, newMessage])
       setInputText('')
-      getBotResponse(inputText, "", '')
+      getBotResponse(inputText, "text", '')
     }
   }
 
