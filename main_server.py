@@ -31,7 +31,7 @@ def post_basic_info():
     user = user_info.find_one({"_id": user_id})
     if user is None:
         user_info.insert_one(request.json)
-        return jsonify({"status": "success", "message": "User created"})
+        return jsonify({"status": "success", "message": "User created", "user_id": user_id})
     else:
         return jsonify({"status": "error", "message": "User already exists"})
 
@@ -106,7 +106,7 @@ def post_activity_info():
     return jsonify({"status": "success", "message": "Activity created"})
 
 
-@app.route("get_doctor_request", methods=["GET"])
+@app.route("/get_doctor_request", methods=["GET"])
 def get_doctor_request():
     user_id = request.args.get("user_id")
     activity = activity_info.find_one({"_id": user_id})
