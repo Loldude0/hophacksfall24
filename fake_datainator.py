@@ -3,10 +3,7 @@ import json
 import base64
 import random
 from datetime import datetime
-<<<<<<< HEAD
-=======
 from bson.objectid import ObjectId
->>>>>>> aryan
 
 # Server URL
 BASE_URL = "http://localhost:5000"  # Replace with your server URL
@@ -17,13 +14,8 @@ temp = 1
 def generate_fake_user_data():
     global temp
     user_data = {
-<<<<<<< HEAD
-        "user_id": temp,
-        "name": f"Test User {random.randint(1, 100)}",
-=======
         "user_id": str(ObjectId()),
         "name": f"Test User {temp}",
->>>>>>> aryan
         "age": random.randint(18, 90),
         "sex": random.choice(["Male", "Female"]),
         "height": random.randint(150, 200),  # height in cm
@@ -45,16 +37,17 @@ def generate_fake_activity_data(user_id, activity_type):
     }
 
     if activity_type == "user_session":
-        activity_data["state"] = "Patient reported headache and dizziness"
-        # Fake images encoded in base64
-        activity_data["images"] = [base64.b64encode(b"fake_image_data_1").decode("utf-8"),
-                                   base64.b64encode(b"fake_image_data_2").decode("utf-8")]
+        activity_data["state"] = "Patient reported headache and dizziness and something more about his health. Fever: 38.5C, Blood Pressure: 120/80, Heart Rate: 80bpm, Oxygen Saturation: 98%"
+        activity_data["images"] = [
+            base64.b64encode(open("./image1.jpeg", "rb").read()).decode("utf-8"),
+            base64.b64encode(open("./image2.jpeg", "rb").read()).decode("utf-8")
+        ]
         
     elif activity_type == "doctor_notes":
-        activity_data["doctor_note"] = "Doctor suggests further tests."
+        activity_data["doctor_note"] = "Doctor suggests further tests. Perhaps an MRI scan. What about a blood test? No idea lol"
 
     elif activity_type == "doctor_diagnosis":
-        activity_data["diagnosis"] = "Migraine with aura++"
+        activity_data["diagnosis"] = "Migraine with negative aura"
 
     elif activity_type == "doctor_prescription":
         activity_data["doctor_note"] = "Prescribed Ibuprofen 400mg"
@@ -107,11 +100,7 @@ if __name__ == "__main__":
             activity_types = ["user_session", "doctor_notes", "doctor_diagnosis", "doctor_prescription", "more_info_request"]
 
             # Choose random number of activities for each user (between 3 and 10)
-<<<<<<< HEAD
-            num_activities = random.randint(3, 10)
-=======
             num_activities = random.randint(1,10)
->>>>>>> aryan
 
             # Generate random activities for each user
             for _ in range(num_activities):

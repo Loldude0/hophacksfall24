@@ -59,11 +59,11 @@ def get_activity_info():
     else:
         # load images and convert them to base64
         for act in activity["activities"]:
-            images = []
-            if "images" in act:
+            if 'images' in act:
+                images = []
                 for image in act["images"]:
-                    image = fs.get(image)
-                    images.append(image.read().decode("utf-8"))
+                    image_data = fs.get(image).read()
+                    images.append(base64.b64encode(image_data).decode("utf-8"))
                 act["images"] = images
     return jsonify(activity)
 
@@ -84,12 +84,13 @@ def post_activity_info():
         state = request.json["state"]
         response = diagnose_patient(state)
         request.json["ai_notes"] = response
-        images = []
-        for image in request.json["images"]:
-            image_data = base64.b64decode(image)
-            image_id = fs.put(image_data)
-            images.append(image_id)
-        request.json["images"] = images
+        if request.json["images"]:
+            images = []
+            for image in request.json["images"]:
+                image_data = base64.b64decode(image)
+                image_id = fs.put(image_data)
+                images.append(image_id)
+            request.json["images"] = images
     elif activity_type == "doctor_notes":
         pass
     elif activity_type == "doctor_diagnosis":

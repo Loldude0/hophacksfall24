@@ -14,12 +14,6 @@ export function PatientDashboardComponent() {
   const [selectedPatientId, setSelectedPatientId] = useState('1') // Default user ID
 
   useEffect(() => {
-<<<<<<< HEAD
-    // Fetch patient basic information
-    fetch(`localhost:5000/get_basic_info?user_id=${selectedPatientId}`)
-      .then(response => response.json())
-      .then(data => {
-=======
     console.log('Fetching patient basic information...');
     fetch(`http://localhost:5000/get_basic_info?user_id=${selectedPatientId}`)
       .then(response => {
@@ -28,21 +22,12 @@ export function PatientDashboardComponent() {
       })
       .then(data => {
         console.log('Basic info data:', data);
->>>>>>> aryan
         if (data.status === "error") {
           console.error(data.message);
         } else {
           setPatientInfo(data);
         }
       })
-<<<<<<< HEAD
-      .catch(error => console.error('Error fetching patient info:', error));
-
-    // Fetch patient activity information
-    fetch(`localhost:5000/get_activity_info?user_id=${selectedPatientId}`)
-      .then(response => response.json())
-      .then(data => {
-=======
       .catch(error => {
         console.error('Error fetching patient info:', error);
       });
@@ -55,22 +40,12 @@ export function PatientDashboardComponent() {
       })
       .then(data => {
         console.log('Activity info data:', data);
->>>>>>> aryan
         if (data.status === "error") {
           console.error(data.message);
         } else {
           setTimelineEvents(data.activities);
         }
       })
-<<<<<<< HEAD
-      .catch(error => console.error('Error fetching activity info:', error));
-  }, [selectedPatientId]);
-
-  const handleSearch = () => {
-    fetch(`localhost:5000/search_patient?name=${searchQuery}`)
-      .then(response => response.json())
-      .then(data => {
-=======
       .catch(error => {
         console.error('Error fetching activity info:', error);
       });
@@ -85,7 +60,6 @@ export function PatientDashboardComponent() {
       })
       .then(data => {
         console.log('Search data:', data);
->>>>>>> aryan
         if (data.status === "error") {
           console.error(data.message);
           setSearchResults([]);
@@ -93,12 +67,6 @@ export function PatientDashboardComponent() {
           setSearchResults(data.patients);
         }
       })
-<<<<<<< HEAD
-      .catch(error => console.error('Error searching for patients:', error));
-  };
-
-  const handlePatientSelect = (user_id) => {
-=======
       .catch(error => {
         console.error('Error searching for patients:', error);
       });
@@ -106,9 +74,44 @@ export function PatientDashboardComponent() {
 
   const handlePatientSelect = (user_id) => {
     console.log('Selecting patient with ID:', user_id);
->>>>>>> aryan
     setSelectedPatientId(user_id);
     setSearchResults([]); // Clear search results after selection
+  };
+
+  const renderActivityContent = (event) => {
+    switch (event.activity_type) {
+      case 'user_session':
+        return (
+          <>
+            <p><strong>State:</strong> {event.state}</p>
+            <p><strong>AI Notes:</strong> {event.ai_notes}</p>
+            {event.images && event.images.map((image, index) => (
+              <img key={index} src={`data:image/png;base64,${image}`} alt="User session" />
+            ))}
+          </>
+        );
+      case 'doctor_notes':
+        return (
+          <p><strong>Doctor's Notes:</strong> {event.doctor_note}</p>
+        );
+      case 'doctor_diagnosis':
+        return (
+          <p><strong>Diagnosis:</strong> {event.diagnosis}</p>
+        );
+      case 'doctor_prescription':
+        return (
+          <p><strong>Doctor's Notes:</strong> {event.doctor_note}</p>
+        );
+      case 'more_info_request':
+        return (
+          <>
+            <p><strong>Doctor's Notes:</strong> {event.doctor_note}</p>
+            <p><strong>Status:</strong> {event.status}</p>
+          </>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -207,8 +210,7 @@ export function PatientDashboardComponent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 mb-2">{event.description}</p>
-                  <p className="text-gray-600 mb-2"><strong>Doctor's Notes:</strong> {event.doctor_notes}</p>
+                  {renderActivityContent(event)}
                 </CardContent>
               </Card>
             </div>
