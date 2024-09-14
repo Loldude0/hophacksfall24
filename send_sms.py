@@ -21,5 +21,10 @@ def send_sms(number, text):
 
     response = requests.post(url, json=payload, headers=headers)
 
+<<<<<<< HEAD
     data = response.json()
     print(data)
+=======
+    # data = response.json()
+    # print(data)
+>>>>>>> aryan

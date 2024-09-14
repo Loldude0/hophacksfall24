@@ -14,28 +14,55 @@ export function PatientDashboardComponent() {
   const [selectedPatientId, setSelectedPatientId] = useState('1') // Default user ID
 
   useEffect(() => {
+<<<<<<< HEAD
     // Fetch patient basic information
     fetch(`localhost:5000/get_basic_info?user_id=${selectedPatientId}`)
       .then(response => response.json())
       .then(data => {
+=======
+    console.log('Fetching patient basic information...');
+    fetch(`http://localhost:5000/get_basic_info?user_id=${selectedPatientId}`)
+      .then(response => {
+        console.log('Basic info response received:', response);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Basic info data:', data);
+>>>>>>> aryan
         if (data.status === "error") {
           console.error(data.message);
         } else {
           setPatientInfo(data);
         }
       })
+<<<<<<< HEAD
       .catch(error => console.error('Error fetching patient info:', error));
 
     // Fetch patient activity information
     fetch(`localhost:5000/get_activity_info?user_id=${selectedPatientId}`)
       .then(response => response.json())
       .then(data => {
+=======
+      .catch(error => {
+        console.error('Error fetching patient info:', error);
+      });
+
+    console.log('Fetching patient activity information...');
+    fetch(`http://localhost:5000/get_activity_info?user_id=${selectedPatientId}`)
+      .then(response => {
+        console.log('Activity info response received:', response);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Activity info data:', data);
+>>>>>>> aryan
         if (data.status === "error") {
           console.error(data.message);
         } else {
           setTimelineEvents(data.activities);
         }
       })
+<<<<<<< HEAD
       .catch(error => console.error('Error fetching activity info:', error));
   }, [selectedPatientId]);
 
@@ -43,6 +70,22 @@ export function PatientDashboardComponent() {
     fetch(`localhost:5000/search_patient?name=${searchQuery}`)
       .then(response => response.json())
       .then(data => {
+=======
+      .catch(error => {
+        console.error('Error fetching activity info:', error);
+      });
+  }, [selectedPatientId]);
+
+  const handleSearch = () => {
+    console.log('Initiating search for patients...');
+    fetch(`http://localhost:5000/search_patient?name=${searchQuery}`)
+      .then(response => {
+        console.log('Search response received:', response);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Search data:', data);
+>>>>>>> aryan
         if (data.status === "error") {
           console.error(data.message);
           setSearchResults([]);
@@ -50,10 +93,20 @@ export function PatientDashboardComponent() {
           setSearchResults(data.patients);
         }
       })
+<<<<<<< HEAD
       .catch(error => console.error('Error searching for patients:', error));
   };
 
   const handlePatientSelect = (user_id) => {
+=======
+      .catch(error => {
+        console.error('Error searching for patients:', error);
+      });
+  };
+
+  const handlePatientSelect = (user_id) => {
+    console.log('Selecting patient with ID:', user_id);
+>>>>>>> aryan
     setSelectedPatientId(user_id);
     setSearchResults([]); // Clear search results after selection
   };

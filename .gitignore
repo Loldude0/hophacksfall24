@@ -4,4 +4,9 @@ test
 *.mp4
 .env
 *.png
+<<<<<<< HEAD
 *.jpg
+=======
+*.jpg
+.venv
+>>>>>>> aryan
