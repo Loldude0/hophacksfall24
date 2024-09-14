@@ -7,6 +7,8 @@ from server_ai_pipeline import diagnose_patient
 from datetime import datetime
 from send_sms import send_sms
 
+from get_patient_response import ask_for_info, extract_info, add_extra_questions
+
 app = Flask(__name__)
 client = MongoClient("mongodb://localhost:27017/")
 db = client["main_db"]
@@ -15,6 +17,10 @@ user_info = db["user_info"]
 activity_info = db["activity_info"]
 fs = gridfs.GridFS(db)
 
+user_info = {
+    "temp": None,
+    "soar throat": None
+}
 
 @app.route("/get_basic_info", methods=["GET"])
 def get_basic_info():
@@ -123,8 +129,26 @@ def get_doctor_request():
                 activity_info.update_one(
                     {"_id": user_id}, {"$set": {"activities": activity["activities"]}}
                 )
-                return jsonify(act)
-    return jsonify({"status": "error", "message": "No pending request"})
+                
+                doctor_note = act["doctor_note"]
+                add_extra_questions(doctor_note, user_info)
+                return jsonify({"status": "ok", "is_pending": True,"message": ask_for_info(user_info)})
+                
+    return jsonify({"status": "ok", "is_pending": False, "message": "No pending request"})
 
+@app.route("/get_bot_response", methods=["GET"])
+def get_bot_response():
+    initial_message = request.args.get("initial_message")
+    if not initial_message:
+        is_img = request.args.get("is_img")
+        question = request.args.get("question")
+        
+        img_path = request.args.get("img_path")
+        user_response = request.args.get("user_response")
+        extract_info(question, user_info, is_img=is_img, img_path=img_path, user_response=user_response)
+    if all(user_info.values()):
+        return jsonify({"status": "done", "message": "All information extracted"})
+    else:
+        return jsonify({"status": "ok", "message": ask_for_info(user_info)})
 
 app.run(port=5000)
