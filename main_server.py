@@ -211,6 +211,14 @@ def get_user_prescription():
 
     return jsonify({"status": "error", "message": "No prescription found"})
 
+# create an api endoint to get a list of all the addresses of the patients
+@app.route("/get_patient_addresses", methods=["GET"])
+def get_patient_addresses():
+    patients = user_info.find()
+    addresses = []
+    for patient in patients:
+        addresses.append(patient["address"])
+    return jsonify({"status": "ok", "addresses": addresses})
 
 @app.route("/get_bot_response", methods=["POST"])
 @cross_origin()
