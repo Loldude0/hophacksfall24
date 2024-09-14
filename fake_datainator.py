@@ -10,6 +10,19 @@ BASE_URL = "http://localhost:5000"  # Replace with your server URL
 
 temp = 1
 
+fake_addresses = [
+    [21.098611, 78.751176],
+    [19.612587, 83.023568],
+    [24.725746, 73.833789],
+    [25.786556, 85.660295],
+    [28.253720, 77.011253],
+    [9.750399, 76.697692],
+    [12.824952, 79.963947],
+    [23.530777, 87.228098],
+    [29.761889, 74.946980],
+    [25.939389, 92.767666]
+]
+
 # Fake data for basic info
 def generate_fake_user_data():
     global temp
@@ -23,7 +36,7 @@ def generate_fake_user_data():
         "blood_type": random.choice(["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]),
         "email": f"test{random.randint(1, 100)}@example.com",
         "phone_number": f"12406103742",
-        "address": f"Street {random.randint(1, 100)}, City {random.randint(1, 100)}"
+        "address": random.choice(fake_addresses)
     }
     temp += 1
     return user_data
