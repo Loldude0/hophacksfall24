@@ -14,12 +14,45 @@ export default function PatientInformation() {
   const [selectedPatientId, setSelectedPatientId] = useState('1')
 
   useEffect(() => {
-    // Fetch patient info logic here
-  }, [selectedPatientId])
+    console.log('Fetching patient basic information...');
+    fetch(`http://localhost:5000/get_basic_info?user_id=${selectedPatientId}`)
+      .then(response => {
+        console.log('Basic info response received:', response);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Basic info data:', data);
+        if (data.status === "error") {
+          console.error(data.message);
+        } else {
+          setPatientInfo(data);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching patient info:', error);
+      });
+  }, [selectedPatientId]);
 
   const handleSearch = () => {
-    // Search logic here
-  }
+    console.log('Initiating search for patients...');
+    fetch(`http://localhost:5000/search_patient?name=${searchQuery}`)
+      .then(response => {
+        console.log('Search response received:', response);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Search data:', data);
+        if (data.status === "error") {
+          console.error(data.message);
+          setSearchResults([]);
+        } else {
+          setSearchResults(data.patients);
+        }
+      })
+      .catch(error => {
+        console.error('Error searching for patients:', error);
+      });
+  };
 
   const handlePatientSelect = (user_id) => {
     setSelectedPatientId(user_id)
@@ -49,20 +82,38 @@ export default function PatientInformation() {
       </Card>
 
       {searchResults.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Search Results</h2>
-          <div className="space-y-4">
-            {/* Search results rendering logic here */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Search Results</h2>
+            <div className="space-y-4">
+              {searchResults.map((patient, index) => (
+                <Card key={index} className="p-4 cursor-pointer" onClick={() => handlePatientSelect(patient._id)}>
+                  <CardHeader>
+                    <CardTitle>{patient.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p><strong>Age:</strong> {patient.age}</p>
+                    <p><strong>Sex:</strong> {patient.sex}</p>
+                    <p><strong>Height:</strong> {patient.height} cm</p>
+                    <p><strong>Weight:</strong> {patient.weight} kg</p>
+                    <p><strong>Blood Type:</strong> {patient.blood_type}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       <div className="flex">
         <div className="w-1/3 pr-4">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Patient Information</h2>
           {patientInfo ? (
             <div className="space-y-2">
-              {/* Patient info rendering logic here */}
+              <p><strong>Name:</strong> {patientInfo.name}</p>
+              <p><strong>Age:</strong> {patientInfo.age}</p>
+              <p><strong>Sex:</strong> {patientInfo.sex}</p>
+              <p><strong>Height:</strong> {patientInfo.height} cm</p>
+              <p><strong>Weight:</strong> {patientInfo.weight} kg</p>
+              <p><strong>Blood Type:</strong> {patientInfo.blood_type}</p>
             </div>
           ) : (
             <p>Loading patient information...</p>
