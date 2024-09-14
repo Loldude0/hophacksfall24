@@ -41,8 +41,8 @@ export default function HealthChatInterface() {
           'Content-Type': 'application/json',
         },
         // TODO: add user_id
-        // TODO: currently hardcoded to user_id = 1
-        body: JSON.stringify({ user_id: 0 }),
+        // TODO: currently hardcoded to user_id = "66e58f396d182df4b6dd514c"
+        body: JSON.stringify({ user_id: "66e58f396d182df4b6dd514c" }),
       });
       if (!response.ok) {
         throw new Error('Network response was not ok');
