@@ -164,7 +164,7 @@ export default function PatientTimeline({ selectedPatientId }) {
       {selectedPatientId && (<Button onClick={handleAddActivity} className="mb-4">Add Activity</Button>)}
       
       {showAddActivityForm && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg w-3/4 h-3/4 max-w-4xl max-h-screen overflow-auto">
             <div className="bg-white p-8 rounded-lg shadow-lg">
               <h2 className="text-xl font-semibold text-black mb-4">Add Activity</h2>
               <div className="mb-4">
