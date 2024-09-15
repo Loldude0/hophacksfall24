@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,13 +9,33 @@ import { Menu, X, Clipboard, MessageCircle, User } from 'lucide-react'
 
 export default function Component() {
   const [isOpen, setIsOpen] = useState(false)
+  const [prescriptions, setPrescriptions] = useState([])
+  const [error, setError] = useState('')
 
-  // Mock data for prescriptions
-  const prescriptions = [
-    { id: 1, name: "Amoxicillin", dosage: "500mg", frequency: "3 times a day" },
-    { id: 2, name: "Ibuprofen", dosage: "400mg", frequency: "As needed" },
-    { id: 3, name: "Lisinopril", dosage: "10mg", frequency: "Once daily" },
-  ]
+  useEffect(() => {
+    const fetchPrescriptions = async () => {
+      try {
+        const user_id = localStorage.getItem('user_id')
+        if (!user_id) {
+          setError('User ID not found')
+          return
+        }
+
+        const response = await fetch(`http://localhost:5000/get_user_prescription?user_id=${user_id}`)
+        const data = await response.json()
+
+        if (data.status === 'ok') {
+          setPrescriptions(data.prescriptions)
+        } else {
+          setError(data.message)
+        }
+      } catch (error) {
+        setError('An error occurred while fetching prescriptions')
+      }
+    }
+
+    fetchPrescriptions()
+  }, [])
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -55,15 +75,17 @@ export default function Component() {
         </Sheet>
       </header>
       <main className="flex-grow p-4 overflow-auto">
+        {error && <div className="text-red-500 mb-4">{error}</div>}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {prescriptions.map((prescription) => (
-            <Card key={prescription.id}>
+          {prescriptions.map((prescription, index) => (
+            <Card key={index}>
               <CardHeader>
-                <CardTitle>{prescription.name}</CardTitle>
+                <CardTitle>{prescription.med_name}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p><strong>Dosage:</strong> {prescription.dosage}</p>
-                <p><strong>Frequency:</strong> {prescription.frequency}</p>
+                <p><strong>Dosage:</strong> {prescription.med_dosage}</p>
+                <p><strong>Frequency:</strong> {prescription.med_frequency}</p>
+                <p><strong>Doctor's Note:</strong> {prescription.doctor_note}</p>
               </CardContent>
             </Card>
           ))}

@@ -11,6 +11,9 @@ export default function PatientTimeline({ selectedPatientId }) {
   const [activityType, setActivityType] = useState('doctor_notes')
   const [doctorNote, setDoctorNote] = useState('')
   const [diagnosis, setDiagnosis] = useState('')
+  const [medName, setMedName] = useState('')
+  const [medDosage, setMedDosage] = useState('')
+  const [medFrequency, setMedFrequency] = useState('')
 
   useEffect(() => {
     console.log('Fetching patient basic information...');
@@ -60,6 +63,9 @@ export default function PatientTimeline({ selectedPatientId }) {
       activity_type: activityType,
       doctor_note: doctorNote,
       diagnosis: activityType === 'doctor_diagnosis' ? diagnosis : '',
+      med_name: activityType === 'doctor_prescription' ? medName : '',
+      med_dosage: activityType === 'doctor_prescription' ? medDosage : '',
+      med_frequency: activityType === 'doctor_prescription' ? medFrequency : '',
     };
 
     fetch('http://localhost:5000/post_activity_info', {
@@ -96,6 +102,9 @@ export default function PatientTimeline({ selectedPatientId }) {
     setShowAddActivityForm(false);
     setDoctorNote('');
     setDiagnosis('');
+    setMedName('');
+    setMedDosage('');
+    setMedFrequency('');
   };
 
   const renderActivityContent = (event) => {
@@ -121,7 +130,12 @@ export default function PatientTimeline({ selectedPatientId }) {
         );
       case 'doctor_prescription':
         return (
-          <p><strong>Doctor's Prescription:</strong> {event.doctor_note}</p>
+          <>
+            <p><strong>Doctor's Prescription:</strong> {event.doctor_note}</p>
+            <p><strong>Medication Name:</strong> {event.med_name}</p>
+            <p><strong>Dosage:</strong> {event.med_dosage}</p>
+            <p><strong>Frequency:</strong> {event.med_frequency}</p>
+          </>
         );
       case 'more_info_request':
         return (
@@ -174,6 +188,37 @@ export default function PatientTimeline({ selectedPatientId }) {
                     className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   />
                 </div>
+              )}
+              {activityType === 'doctor_prescription' && (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black">Medication Name</label>
+                    <input
+                      type="text"
+                      value={medName}
+                      onChange={(e) => setMedName(e.target.value)}
+                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black">Dosage</label>
+                    <input
+                      type="text"
+                      value={medDosage}
+                      onChange={(e) => setMedDosage(e.target.value)}
+                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black">Frequency</label>
+                    <input
+                      type="text"
+                      value={medFrequency}
+                      onChange={(e) => setMedFrequency(e.target.value)}
+                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                </>
               )}
               <div className="flex justify-end space-x-4 text-black">
                 <Button variant="outline" onClick={() => setShowAddActivityForm(false)}>Cancel</Button>

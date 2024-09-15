@@ -52,7 +52,6 @@ export default function HealthChatInterface() {
 
   const getDoctorRequest = async () => {
     try {
-      console.log(userId)
       const response = await fetch('http://localhost:5000/get_doctor_request', {
         method: 'POST',
         headers: {
@@ -64,7 +63,6 @@ export default function HealthChatInterface() {
         throw new Error('Network response was not ok')
       }
       const data = await response.json()
-      console.log(data.is_pending)
       if (data.is_pending) {
         const newMessage: Message = {
           id: Date.now(),
@@ -74,9 +72,7 @@ export default function HealthChatInterface() {
         }
         setMessages(prev => [...prev, newMessage])
         setPrevResponse(data.message)
-        console.log(data.message)
       } else {
-        console.log("didnt work lmao")
         const newMessage: Message = {
           id: Date.now(),
           type: 'text',
@@ -87,7 +83,7 @@ export default function HealthChatInterface() {
         setPrevResponse(data.message)
       }
     } catch (error) {
-      console.error('Error fetching bot response:', error)
+      console.error('Error fetching doctor request:', error)
     }
   }
 

@@ -1,0 +1,41 @@
+[
+    {
+        "user_id": "66e61c50f28f54836a68d5a3",
+        "activity_type": "user_session",
+        "timestamp": datetime.datetime(2024,
+        9,
+        14,
+        23,
+        29,
+        20,
+        332000),
+        "state": "Patient reported headache and dizziness and something more about his health. Fever: 38.5C, Blood Pressure: 120/80, Heart Rate: 80bpm, Oxygen Saturation: 98%",
+        "images": [ObjectId("66e61c5133869543b1a22415"), ObjectId("66e61c5133869543b1a22417")
+        ],
+        "ai_notes": "## Possible Diagnosis: Migraine\n\n* **Headache and Dizziness:** Classic migraine symptoms.\n* **Fever:** May indicate an underlying infection that triggered the migraine. \n\n**Note:**  It is important to consider other possibilities as well, and a thorough medical history and examination are necessary for an accurate diagnosis. \n"
+    },
+    {
+        "user_id": "66e61c50f28f54836a68d5a3",
+        "activity_type": "doctor_diagnosis",
+        "timestamp": datetime.datetime(2024,
+        9,
+        14,
+        23,
+        29,
+        21,
+        25000),
+        "diagnosis": "Migraine with negative aura"
+    },
+    {
+        "user_id": "66e61c50f28f54836a68d5a3",
+        "activity_type": "doctor_prescription",
+        "timestamp": datetime.datetime(2024,
+        9,
+        14,
+        23,
+        29,
+        21,
+        34000),
+        "doctor_note": "Prescribed Ibuprofen 400mg"
+    }
+]

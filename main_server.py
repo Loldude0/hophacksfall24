@@ -11,6 +11,8 @@ from flask_cors import CORS, cross_origin
 from bson.objectid import ObjectId
 import requests
 import os
+from collections import defaultdict
+from threading import Lock
 
 from get_patient_response import ask_for_info, extract_info, add_extra_questions
 from disease_prediction import predict
@@ -44,7 +46,8 @@ user_info_client = {
     "skin rash": None,
 }
 
-response_storage_dict = {}
+response_storage_dict = defaultdict(str)
+response_storage_lock = Lock()
 
 
 def convert_all_images_to_base64():
@@ -212,11 +215,17 @@ def get_user_prescription():
         prescriptions = []
         for act in activity["activities"]:
             if act["activity_type"] == "doctor_prescription":
-                prescriptions.append(act["doctor_note"])
-
+                prescriptions.append({
+                    "med_name": act["med_name"],
+                    "med_dosage": act["med_dosage"],
+                    "med_frequency": act["med_frequency"],
+                    "doctor_note": act["doctor_note"],
+                })
+        
+        if prescriptions:
             return jsonify({"status": "ok", "prescriptions": prescriptions})
-
-    return jsonify({"status": "error", "message": "No prescription found"})
+        else:
+            return jsonify({"status": "error", "message": "No prescription found"})
 
 
 @app.route("/get_user_diagnosis", methods=["GET"])
@@ -255,6 +264,15 @@ def get_patient_addresses():
 @cross_origin()
 def get_bot_response():
     data = request.json
+    
+    required_keys = ["user_id", "response_type", "question", "content", "file_name"]
+    if not all(key in data for key in required_keys):
+        return jsonify({"status": "error", "message": "Missing required data"}), 400
+    
+    user_id = str(data.get("user_id", ""))
+    if not user_id:
+        return jsonify({"status": "error", "message": "Invalid user ID"}), 400
+
     response_type = data["response_type"]
     question = data["question"]
     content = data["content"]
@@ -262,40 +280,40 @@ def get_bot_response():
 
     print(request.json)
     print(response_type, question, content, file_name)
-    user_response = extract_info(
-        question,
-        state=user_info_client,
-        response_type=response_type,
-        content=content,
-        file_name=file_name,
-    )
-    # save the response in the response_storage_dict
-    response_storage_dict[data["user_id"]] = (
-        response_storage_dict.get(data["user_id"], {})
-        + "question-answer pair: "
-        + question
-        + ":"
-        + user_response
-    )
-    print(user_info_client)
-    if all([value is not None for value in user_info_client.values()]):
-        # post activity info by calling the post_activity_info function and passing in the necessary parameters
-        user_id = data["user_id"]
-        requests.post(
-            "http://localhost:5000/post_activity_info",
-            json={
-                "user_id": user_id,
-                "activity_type": "user_session",
-                "state": user_info_client,
-                "images": convert_all_images_to_base64(),
-                "responses": response_storage_dict[user_id],
-            },
+    
+    try:
+        user_response = extract_info(
+            question,
+            state=user_info_client,
+            response_type=response_type,
+            content=content,
+            file_name=file_name,
         )
-        os.rmdir("./media")
-        return jsonify({"status": "done", "message": "All information extracted"})
-    else:
-        return jsonify({"status": "ok", "message": ask_for_info(user_info_client)})
-
+        
+        with response_storage_lock:
+            response_storage_dict[user_id] += f"question-answer pair: {question}:{user_response}\n"
+        
+        print(user_info_client)
+        
+        if all([value is not None for value in user_info_client.values()]):
+            requests.post(
+                "http://localhost:5000/post_activity_info",
+                json={
+                    "user_id": user_id,
+                    "activity_type": "user_session",
+                    "state": user_info_client,
+                    "images": convert_all_images_to_base64(),
+                    "responses": response_storage_dict[user_id],
+                },
+            )
+            os.rmdir("./media")
+            return jsonify({"status": "done", "message": "All information extracted"})
+        else:
+            return jsonify({"status": "ok", "message": ask_for_info(user_info_client)})
+    
+    except Exception as e:
+        print(f"Error in get_bot_response: {e}")
+        return jsonify({"status": "error", "message": "An error occurred processing your request"}), 500
 
 @app.route("/search_patient", methods=["GET"])
 def search_patient():
