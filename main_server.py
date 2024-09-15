@@ -211,6 +211,23 @@ def get_user_prescription():
 
     return jsonify({"status": "error", "message": "No prescription found"})
 
+# get users latest diagnosis
+@app.route("/get_user_diagnosis", methods=["GET"])
+def get_user_diagnosis():
+    user_id = request.args.get("user_id")
+    activity = activity_info.find_one({"_id": user_id})
+    if activity is None:
+        return jsonify({"status": "error", "message": "Activity not found"})
+    else:
+        diagnosis = None
+        for act in activity["activities"]:
+            if act["activity_type"] == "doctor_diagnosis":
+                diagnosis = act["diagnosis"]
+                
+            return jsonify({"status": "ok", "diagnosis": diagnosis})
+
+    return jsonify({"status": "error", "message": "No diagnosis found"})
+
 # create an api endoint to get a list of all the addresses of the patients
 @app.route("/get_patient_addresses", methods=["GET"])
 def get_patient_addresses():
