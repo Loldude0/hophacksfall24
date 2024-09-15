@@ -195,12 +195,6 @@ export default function HealthChatInterface() {
     }
   }
 
-<<<<<<< HEAD
-=======
-  //initialize the chat
-  getDoctorRequest();
-
->>>>>>> patient
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
       <header className="bg-primary text-primary-foreground p-4 text-center flex justify-between items-center">
