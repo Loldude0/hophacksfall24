@@ -1,6 +1,7 @@
 import torch
 
-model = torch.load("./model/model.pth")
+
+loaded_model = torch.load("./model/model.pth")
 
 def predict(state):
     """
@@ -30,5 +31,6 @@ def predict(state):
     """
     
     X = torch.tensor(state, dtype=torch.float32)
-    prediction = model(X)
+    prediction = loaded_model(X)
+    print(prediction)
     return prediction

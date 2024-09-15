@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Circle } from 'lucide-react'
-import { PieChart } from '@mui/x-charts/PieChart';
+import { PieChart } from '@mui/x-charts';
 
 export default function PatientTimeline({ selectedPatientId }) {
   const [timelineEvents, setTimelineEvents] = useState([])
@@ -15,6 +15,7 @@ export default function PatientTimeline({ selectedPatientId }) {
   const [medName, setMedName] = useState('')
   const [medDosage, setMedDosage] = useState('')
   const [medFrequency, setMedFrequency] = useState('')
+  const [predictionData, setPredictionData] = useState({})
 
   useEffect(() => {
     console.log('Fetching patient basic information...');
@@ -53,6 +54,26 @@ export default function PatientTimeline({ selectedPatientId }) {
         console.error('Error fetching activity info:', error);
       });
   }, [selectedPatientId]);
+
+  useEffect(() => {
+    const fetchPredictions = async () => {
+      const newPredictionData = {}
+      for (const event of timelineEvents) {
+        if (event.activity_type === 'user_session' && !predictionData[event.id]) {
+          try {
+            const response = await fetch(`http://localhost:5000/get_prediction`)
+            const data = await response.json()
+            newPredictionData[event.id] = data
+          } catch (error) {
+            console.error('Error fetching prediction:', error)
+          }
+        }
+      }
+      setPredictionData(prev => ({ ...prev, ...newPredictionData }))
+    }
+
+    fetchPredictions()
+  }, [timelineEvents])
 
   const handleAddActivity = () => {
     setShowAddActivityForm(true)
@@ -128,20 +149,14 @@ export default function PatientTimeline({ selectedPatientId }) {
                 ))}
               </div>
             )}
-            {
-              fetch(`http://localhost:5000/get_prediction`)
-              .then(response => response.json())
-              .then(data => {
-                <PieChart
-                  series = {[
-                    data
-                  ]}
-                  width = {400}
-                  height = {400}
-                />
-              })
-            }
-        </>
+            {predictionData[event.id] && (
+              <PieChart
+                series={[predictionData[event.id]]}
+                width={400}
+                height={400}
+              />
+            )}
+          </>
         );
       case 'doctor_notes':
         return (
@@ -178,7 +193,7 @@ export default function PatientTimeline({ selectedPatientId }) {
       {selectedPatientId && (<Button onClick={handleAddActivity} className="mb-4">Add Activity</Button>)}
       
       {showAddActivityForm && (
-          <div className="bg-white p-8 rounded-lg shadow-lg w-3/4 h-3/4 max-w-4xl max-h-screen overflow-auto">
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"> /* TODO: fix this later*/
             <div className="bg-white p-8 rounded-lg shadow-lg">
               <h2 className="text-xl font-semibold text-black mb-4">Add Activity</h2>
               <div className="mb-4">

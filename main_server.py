@@ -215,13 +215,15 @@ def get_user_prescription():
         prescriptions = []
         for act in activity["activities"]:
             if act["activity_type"] == "doctor_prescription":
-                prescriptions.append({
-                    "med_name": act["med_name"],
-                    "med_dosage": act["med_dosage"],
-                    "med_frequency": act["med_frequency"],
-                    "doctor_note": act["doctor_note"],
-                })
-        
+                prescriptions.append(
+                    {
+                        "med_name": act["med_name"],
+                        "med_dosage": act["med_dosage"],
+                        "med_frequency": act["med_frequency"],
+                        "doctor_note": act["doctor_note"],
+                    }
+                )
+
         if prescriptions:
             return jsonify({"status": "ok", "prescriptions": prescriptions})
         else:
@@ -260,15 +262,14 @@ def get_patient_addresses():
     return jsonify({"status": "ok", "addresses": markers})
 
 
-@app.route("/get_bot_response", methods=["POST"])
 @cross_origin()
 def get_bot_response():
     data = request.json
-    
+
     required_keys = ["user_id", "response_type", "question", "content", "file_name"]
     if not all(key in data for key in required_keys):
         return jsonify({"status": "error", "message": "Missing required data"}), 400
-    
+
     user_id = str(data.get("user_id", ""))
     if not user_id:
         return jsonify({"status": "error", "message": "Invalid user ID"}), 400
@@ -280,7 +281,7 @@ def get_bot_response():
 
     print(request.json)
     print(response_type, question, content, file_name)
-    
+
     try:
         user_response = extract_info(
             question,
@@ -289,12 +290,14 @@ def get_bot_response():
             content=content,
             file_name=file_name,
         )
-        
+
         with response_storage_lock:
-            response_storage_dict[user_id] += f"question-answer pair: {question}:{user_response}\n"
-        
+            response_storage_dict[
+                user_id
+            ] += f"question-answer pair: {question}:{user_response}\n"
+
         print(user_info_client)
-        
+
         if all([value is not None for value in user_info_client.values()]):
             requests.post(
                 "http://localhost:5000/post_activity_info",
@@ -310,10 +313,19 @@ def get_bot_response():
             return jsonify({"status": "done", "message": "All information extracted"})
         else:
             return jsonify({"status": "ok", "message": ask_for_info(user_info_client)})
-    
+
     except Exception as e:
         print(f"Error in get_bot_response: {e}")
-        return jsonify({"status": "error", "message": "An error occurred processing your request"}), 500
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "An error occurred processing your request",
+                }
+            ),
+            500,
+        )
+
 
 @app.route("/search_patient", methods=["GET"])
 def search_patient():
@@ -331,20 +343,32 @@ def search_patient():
 
     return jsonify({"status": "success", "patients": patient_list})
 
-@app.route("/get_prediction", methods=["POST"])
+
+@app.route("/get_prediction", methods=["GET"])
 def get_prediction():
-    input_data = user_info_client.values()
+    input_data = list(user_info_client.values())
     for i in range(len(input_data)):
         if input_data[i] is None:
             input_data[i] = 0
-    
+
     prediction = predict(input_data)
     series = {"data": []}
-    
-    classes = ["Covid-19", "Bronchitis", "Influenza", "Migraine", "Tuberculosis", "Meningitis", "Legionnaires' Disease"]
+
+    classes = [
+        "Covid-19",
+        "Bronchitis",
+        "Influenza",
+        "Migraine",
+        "Tuberculosis",
+        "Meningitis",
+        "Legionnaires' Disease",
+    ]
     for i in range(len(prediction)):
-        series["data"].append({"id": i, "value": prediction[i].item(), "label": classes[i]})
+        series["data"].append(
+            {"id": i, "value": prediction[i].item(), "label": classes[i]}
+        )
 
     return jsonify(series)
-    
+
+
 app.run(port=5000, debug=True)
