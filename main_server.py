@@ -100,10 +100,12 @@ def get_activity_info():
                     images.append(base64.b64encode(image_data).decode("utf-8"))
                 act["images"] = images
         activity["activities"] = activity["activities"][::-1]
+
         for act in activity["activities"]:
-            for key in list(act["state"].keys()):
-                if act["state"][key] is None:
-                    del act["state"][key]
+            if "state" in act and type(act["state"]) is not str:
+                for key in list(act["state"].keys()):
+                    if act["state"][key] is None:
+                        del act["state"][key]
     return jsonify(activity)
 
 
