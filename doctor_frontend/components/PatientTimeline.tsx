@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Circle } from 'lucide-react'
+import { PieChart } from '@mui/x-charts';
 
 export default function PatientTimeline({ selectedPatientId }) {
   const [timelineEvents, setTimelineEvents] = useState([])
@@ -11,6 +12,10 @@ export default function PatientTimeline({ selectedPatientId }) {
   const [activityType, setActivityType] = useState('doctor_notes')
   const [doctorNote, setDoctorNote] = useState('')
   const [diagnosis, setDiagnosis] = useState('')
+  const [medName, setMedName] = useState('')
+  const [medDosage, setMedDosage] = useState('')
+  const [medFrequency, setMedFrequency] = useState('')
+  const [predictionData, setPredictionData] = useState({})
 
   useEffect(() => {
     console.log('Fetching patient basic information...');
@@ -50,6 +55,26 @@ export default function PatientTimeline({ selectedPatientId }) {
       });
   }, [selectedPatientId]);
 
+  useEffect(() => {
+    const fetchPredictions = async () => {
+      const newPredictionData = {}
+      for (const event of timelineEvents) {
+        if (event.activity_type === 'user_session' && !predictionData[event.id]) {
+          try {
+            console.log(event)
+            const data = event.prediction
+            newPredictionData[event.id] = data
+          } catch (error) {
+            console.error('Error fetching prediction:', error)
+          }
+        }
+      }
+      setPredictionData(prev => ({ ...prev, ...newPredictionData }))
+    }
+
+    fetchPredictions()
+  }, [timelineEvents])
+
   const handleAddActivity = () => {
     setShowAddActivityForm(true)
   }
@@ -60,6 +85,9 @@ export default function PatientTimeline({ selectedPatientId }) {
       activity_type: activityType,
       doctor_note: doctorNote,
       diagnosis: activityType === 'doctor_diagnosis' ? diagnosis : '',
+      med_name: activityType === 'doctor_prescription' ? medName : '',
+      med_dosage: activityType === 'doctor_prescription' ? medDosage : '',
+      med_frequency: activityType === 'doctor_prescription' ? medFrequency : '',
     };
 
     fetch('http://localhost:5000/post_activity_info', {
@@ -96,6 +124,9 @@ export default function PatientTimeline({ selectedPatientId }) {
     setShowAddActivityForm(false);
     setDoctorNote('');
     setDiagnosis('');
+    setMedName('');
+    setMedDosage('');
+    setMedFrequency('');
   };
 
   const renderActivityContent = (event) => {
@@ -103,12 +134,37 @@ export default function PatientTimeline({ selectedPatientId }) {
       case 'user_session':
         return (
           <>
-            <p><strong>Patient's Report: </strong> {JSON.stringify(event.state)}</p>
+            <p><strong>Patient's Report: </strong> {
+              Object.entries(event.state)
+                .filter(([key, value]) => value !== false && value !== null)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join(', ')
+            }</p>
+            
+            {event.images && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {event.images.map((image, index) => (
+                  <img 
+                    key={index} 
+                    src={`data:image/png;base64,${image}`}
+                    alt={`User session image ${index + 1}`}
+                    className="max-w-xs h-auto"
+                  />
+                ))}
+              </div>
+            )}
             <p><strong>Summary:</strong> {event.summary}</p>
-            <p><strong>Disease prediction:</strong> {event.prediction}</p>
-            {event.images && event.images.map((image, index) => (
-              <img key={index} src={`data:image/png;base64,${image}`} alt="User session" />
-            ))}
+            <p><strong>Disease prediction:</strong> }</p>
+            {event.prediction && (
+              console.log(event.prediction),
+              <div className="">
+                <PieChart
+                  series={[event.prediction]}
+                  width={600}
+                  height={250}
+                />
+              </div>
+            )}
           </>
         );
       case 'doctor_notes':
@@ -121,7 +177,12 @@ export default function PatientTimeline({ selectedPatientId }) {
         );
       case 'doctor_prescription':
         return (
-          <p><strong>Doctor's Prescription:</strong> {event.doctor_note}</p>
+          <>
+            <p><strong>Doctor's Prescription:</strong> {event.doctor_note}</p>
+            <p><strong>Medication Name:</strong> {event.med_name}</p>
+            <p><strong>Dosage:</strong> {event.med_dosage}</p>
+            <p><strong>Frequency:</strong> {event.med_frequency}</p>
+          </>
         );
       case 'more_info_request':
         return (
@@ -141,8 +202,8 @@ export default function PatientTimeline({ selectedPatientId }) {
       {selectedPatientId && (<Button onClick={handleAddActivity} className="mb-4">Add Activity</Button>)}
       
       {showAddActivityForm && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-8 rounded-lg shadow-lg">
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"> /* TODO: fix this later*/
+            <div className="bg-white w-1/2 h-2/7 p-8 rounded-lg shadow-lg">
               <h2 className="text-xl font-semibold text-black mb-4">Add Activity</h2>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-black">Activity Type</label>
@@ -174,6 +235,37 @@ export default function PatientTimeline({ selectedPatientId }) {
                     className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   />
                 </div>
+              )}
+              {activityType === 'doctor_prescription' && (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black">Medication Name</label>
+                    <input
+                      type="text"
+                      value={medName}
+                      onChange={(e) => setMedName(e.target.value)}
+                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black">Dosage</label>
+                    <input
+                      type="text"
+                      value={medDosage}
+                      onChange={(e) => setMedDosage(e.target.value)}
+                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black">Frequency</label>
+                    <input
+                      type="text"
+                      value={medFrequency}
+                      onChange={(e) => setMedFrequency(e.target.value)}
+                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                </>
               )}
               <div className="flex justify-end space-x-4 text-black">
                 <Button variant="outline" onClick={() => setShowAddActivityForm(false)}>Cancel</Button>

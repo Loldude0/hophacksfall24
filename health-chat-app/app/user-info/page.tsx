@@ -63,7 +63,7 @@ export default function UserInfoPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Welcome to Health Chat</CardTitle>
+          <CardTitle>Welcome to DocReach</CardTitle>
           <CardDescription>Please provide your information to get started</CardDescription>
         </CardHeader>
         <CardContent>

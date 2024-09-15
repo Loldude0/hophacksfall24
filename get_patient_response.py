@@ -15,6 +15,7 @@ def correct_base64_string(base64_string: str) -> str:
     pattern = r'data:image/[^;]*;base64,(.*)'
     match = re.search(pattern, base64_string)
     if match:
+        print(match.group(1))
         return match.group(1)
     return base64_string
 
@@ -52,7 +53,7 @@ def parse_response_list(response: str) -> list:
         return ast.literal_eval(list_str)
     return []
 
-def ask_for_info(state: dict) -> str:
+def ask_for_info(state: dict, question) -> str:
     prompt = """
     You are a telemedicine doctor's helper. You are seeing a patient who is experiencing symptoms of a disease. You need to ask the patient for more information to diagnose the disease. The patient is not in front of you, so you need to ask the patient for more information.
     You currently have the following information about the patient:
@@ -61,12 +62,38 @@ def ask_for_info(state: dict) -> str:
     "None" in the state means that the information is not available.
     ask the patient for more information on what you deem necessary to diagnose the disease.
     
+    the type of each value in the state is as follows:
+
+    "body temperature in celcius": float,
+    "Respiratory rate": int,
+    "cough": bool,
+    "shortness of breath": bool,
+    "chest pain": bool,
+    "fatigue": bool,
+    "headache": bool,
+    "nausea": bool,
+    "body aches": bool,
+    "dizziness": bool,
+    "loss of taste": bool,
+    "loss of smell": bool,
+    "sore throat": bool,
+    "congestion": bool,
+    "runny nose": bool,
+    "diarrhea": bool,
+    "skin rash": bool,
+
     You don't need to say "Okay, I understand in the beginning". Just start asking questions but be kind and guiding.
     ask questions one by one and wait for the patient's response.
+    do not include any key that are not in the state.
+
+    NOTE if this is not None, please ask the patient for more information about it: {question}
+
+    You don't need to greet the patient. Just start asking questions. You can ask multiple questions at once. Do not ask too many questions. Just ask what you think is necessary to diagnose the disease then fill all None values with False.
+
     Your role as a doctor's helper starts now.
     """
     
-    response = model.generate_content(prompt.format(state=state))
+    response = model.generate_content(prompt.format(state=state, question=question))
     return response.text
 
 def extract_info(question:str, state: dict, response_type: str = "text", **kwargs) -> None:
@@ -81,6 +108,7 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
         user response to the question (required if response_type = "text")
     
     """
+    to_return = None
     if not os.path.exists("./media"):
         os.makedirs("./media")
         os.makedirs("./media/images")
@@ -107,6 +135,8 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
         Fill in or update the state with the new information extracted from the image.
         make a key value pair for each piece of information to update the state.
         do not include any key that are not in the state.
+        Use only float, int, or bool values.
+        do not include any key that are not in the state.
         
         example response:
         {{
@@ -117,7 +147,7 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
         """
         
         response = model.generate_content([img_file, prompt.format(question=question,state=state)])
-        return None
+        to_return = "fever"
         
     elif response_type == "text" or response_type == "audio":
         if response_type == "text":
@@ -127,8 +157,12 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
             file_name = kwargs["file_name"]
             extension = file_name.split(".")[-1]
             dst_dir = f"./media/audio/{file_name}"
+            #only use data after the last comma
+            print(base64_audio)
+            # actual_audio = base64.b64decode(base64_audio.split(",")[-1])
             base_64_to_audio(base64_audio, extension, dst_dir)
             user_response = speech_to_text(dst_dir)
+            print(user_response)
     
         prompt = """
         extract the data from the patient's response and update the state with the new information.
@@ -145,6 +179,9 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
         Fill in or update the state with the new information extracted from the user response.
         make a key value pair for each piece of information to update the state.
         do not include any key that are not in the state.
+        do not include comments.
+        Use only float, int, or bool values.
+        do not include any key that are not in the state.
         
         example response:
         {{
@@ -154,18 +191,19 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
         """
 
         response = model.generate_content(prompt.format(question=question,state=state, user_response=user_response))
-        return user_response
+        to_return = user_response
     
     else:
         raise ValueError("Invalid response type '{}'".format(response_type))
     
     response_dict = parse_response_dict(response.text)
     update_user_dict(state, response_dict)
+    return to_return
 
 def add_extra_questions(question: str, user_state: dict) -> None:
     prompt = """
-    create a list of extra states to ask the patient based on the current state of the patient. Do not ask too many questions. Just ask what you think is necessary to diagnose the disease.
-    
+    create a list of extra 1 states to ask the patient based on the current state of the patient. Do not ask too many questions. Just ask what you think is necessary to diagnose the disease.
+    If you are adding extra states, make sure to mention that its new and may not be related to the current state.
     current patient state:
     {state}
     
@@ -173,9 +211,10 @@ def add_extra_questions(question: str, user_state: dict) -> None:
     {question}
     
     initialize the values of the new dictionary keys to None.
-    
+    INCLUDE THE QUESTION AS ONE OF THE KEYS
+
     output format:
-    ["key 1", "key 2", "key 3"]
+    ["key 1", "key 2"]
     
     output example:
     ["weight", "height", "blood type"]
@@ -184,7 +223,11 @@ def add_extra_questions(question: str, user_state: dict) -> None:
     """
     
     response = model.generate_content(prompt.format(state=user_state, question=question))
+    #add the question itself to the list
     response_list = parse_response_list(response.text)
+    response_list = [question]
+    print("HERE")
+    print(response_list)
     expand_user_dict(user_state, response_list)
 
 if __name__ == "__main__":
@@ -193,7 +236,7 @@ if __name__ == "__main__":
     "soar throat": None
     }
     while True:
-        question = ask_for_info(user_info)
+        question = ask_for_info(user_info, None)
         print(question)
         user_response = input("Enter your response: ")
         if user_response == "exit":

@@ -11,6 +11,8 @@ from flask_cors import CORS, cross_origin
 from bson.objectid import ObjectId
 import requests
 import os
+from collections import defaultdict
+from threading import Lock
 
 from get_patient_response import ask_for_info, extract_info, add_extra_questions
 from disease_prediction import predict
@@ -26,25 +28,36 @@ CORS(app)
 
 user_info_client = {
     "body temperature in celcius": None,
-    "Respiratory rate": None,
+    "Respiratory rate": 20,
     "cough": None,
-    "shortness of breath": None,
+    "shortness of breath": False,
     "chest pain": None,
     "fatigue": None,
     "headache": None,
-    "nausea": None,
-    "body aches": None,
-    "dizziness": None,
-    "loss of taste": None,
+    "nausea": True,
+    "body aches": True,
+    "dizziness": False,
+    "loss of taste": False,
     "loss of smell": None,
     "sore throat": None,
-    "congestion": None,
+    "congestion": False,
     "runny nose": None,
     "diarrhea": None,
-    "skin rash": None,
+    "skin rash": True,
 }
 
-response_storage_dict = {}
+classes = [
+        "Covid-19",
+        "Bronchitis",
+        "Influenza",
+        "Migraine",
+        "Tuberculosis",
+        "Meningitis",
+        "Legionnaires' Disease",
+]
+
+response_storage_dict = defaultdict(str)
+response_storage_lock = Lock()
 
 
 def convert_all_images_to_base64():
@@ -111,6 +124,7 @@ def get_activity_info():
 
 @app.route("/post_activity_info", methods=["POST"])
 def post_activity_info():
+    print(request.json)
     user_id = request.json["user_id"]
     activity_type = request.json["activity_type"]
     activity = activity_info.find_one({"_id": user_id})
@@ -124,11 +138,15 @@ def post_activity_info():
     user_number = user_info.find_one({"_id": user_id})["phone_number"]
 
     if activity_type == "user_session":
+        eps = 1e-3
         state = request.json["state"]
         responses = request.json["responses"]
-        response = summarize(responses)
-        request.json["summary"] = response
-        request.json["prediction"] = predict(state)
+        # print(responses)
+        # response = summarize(responses)
+        # request.json["summary"] = response
+        # prediction = predict(state)
+        # print({"data": [{"id":i, "value": prediction[i], "label": classes[i]} for i in range(7) if prediction[i] > eps]})
+        # request.json["prediction"] = {"data": [{"id":i, "value": prediction[i], "label": classes[i]} for i in range(7) if prediction[i] > eps]}
         if request.json["images"]:
             images = []
             for image in request.json["images"]:
@@ -191,7 +209,7 @@ def get_doctor_request():
                     {
                         "status": "ok",
                         "is_pending": True,
-                        "message": ask_for_info(user_info_client),
+                        "message": ask_for_info(user_info_client, doctor_note),
                         "phone_number": "12406103742",
                     }
                 )
@@ -212,11 +230,19 @@ def get_user_prescription():
         prescriptions = []
         for act in activity["activities"]:
             if act["activity_type"] == "doctor_prescription":
-                prescriptions.append(act["doctor_note"])
+                prescriptions.append(
+                    {
+                        "med_name": act["med_name"],
+                        "med_dosage": act["med_dosage"],
+                        "med_frequency": act["med_frequency"],
+                        "doctor_note": act["doctor_note"],
+                    }
+                )
 
+        if prescriptions:
             return jsonify({"status": "ok", "prescriptions": prescriptions})
-
-    return jsonify({"status": "error", "message": "No prescription found"})
+        else:
+            return jsonify({"status": "error", "message": "No prescription found"})
 
 
 @app.route("/get_user_diagnosis", methods=["GET"])
@@ -241,6 +267,7 @@ def get_patient_addresses():
     patients = user_info.find()
     markers = []
     for patient in patients:
+        print(patient)
         markers.append(
             {
                 "name": patient["_id"],
@@ -251,17 +278,24 @@ def get_patient_addresses():
     return jsonify({"status": "ok", "addresses": markers})
 
 
-@app.route("/get_bot_response", methods=["POST"])
 @cross_origin()
+@app.route("/get_bot_response", methods=["POST"])
 def get_bot_response():
     data = request.json
+
+    required_keys = ["user_id", "response_type", "question", "content", "file_name"]
+    if not all(key in data for key in required_keys):
+        return jsonify({"status": "error", "message": "Missing required data"}), 400
+
+    user_id = data["user_id"]
+    if not user_id:
+        return jsonify({"status": "error", "message": "Invalid user ID"}), 400
+
     response_type = data["response_type"]
     question = data["question"]
     content = data["content"]
     file_name = data["file_name"]
 
-    print(request.json)
-    print(response_type, question, content, file_name)
     user_response = extract_info(
         question,
         state=user_info_client,
@@ -269,18 +303,13 @@ def get_bot_response():
         content=content,
         file_name=file_name,
     )
-    # save the response in the response_storage_dict
-    response_storage_dict[data["user_id"]] = (
-        response_storage_dict.get(data["user_id"], {})
-        + "question-answer pair: "
-        + question
-        + ":"
-        + user_response
-    )
-    print(user_info_client)
+
+    with response_storage_lock:
+        response_storage_dict[
+            user_id
+        ] += f"question-answer pair: {question}:{user_response}\n"
+
     if all([value is not None for value in user_info_client.values()]):
-        # post activity info by calling the post_activity_info function and passing in the necessary parameters
-        user_id = data["user_id"]
         requests.post(
             "http://localhost:5000/post_activity_info",
             json={
@@ -291,10 +320,12 @@ def get_bot_response():
                 "responses": response_storage_dict[user_id],
             },
         )
-        os.rmdir("./media")
+        
+        
+
         return jsonify({"status": "done", "message": "All information extracted"})
     else:
-        return jsonify({"status": "ok", "message": ask_for_info(user_info_client)})
+        return jsonify({"status": "ok", "message": ask_for_info(user_info_client, None)})
 
 
 @app.route("/search_patient", methods=["GET"])
@@ -312,6 +343,36 @@ def search_patient():
         return jsonify({"status": "error", "message": "No patients found"})
 
     return jsonify({"status": "success", "patients": patient_list})
+
+
+@app.route("/get_prediction", methods=["GET"])
+def get_prediction():
+    input_data = list(user_info_client.values())
+    for i in range(len(input_data)):
+        if input_data[i] is None:
+            input_data[i] = 0.5
+
+    prediction = predict(input_data)
+    series = {"data": []}
+
+    classes = [
+        "Covid-19",
+        "Bronchitis",
+        "Influenza",
+        "Migraine",
+        "Tuberculosis",
+        "Meningitis",
+        "Legionnaires' Disease",
+    ]
+    print(prediction)
+    eps = 1e-6
+    for i in range(len(prediction)):
+        if prediction[i] > eps:
+            series["data"].append(
+                {"id": i, "value": prediction[i], "label": classes[i]}
+        )
+
+    return jsonify(series)
 
 
 app.run(port=5000, debug=True)
