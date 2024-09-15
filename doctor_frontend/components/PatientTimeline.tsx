@@ -106,9 +106,18 @@ export default function PatientTimeline({ selectedPatientId }) {
             <p><strong>Patient's Report: </strong> {JSON.stringify(event.state)}</p>
             <p><strong>Summary:</strong> {event.summary}</p>
             <p><strong>Disease prediction:</strong> {event.prediction}</p>
-            {event.images && event.images.map((image, index) => (
-              <img key={index} src={`data:image/png;base64,${image}`} alt="User session" />
-            ))}
+            {event.images && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {event.images.map((image, index) => (
+                  <img 
+                    key={index} 
+                    src={`data:image/png;base64,${image}`} 
+                    alt={`User session image ${index + 1}`}
+                    className="max-w-xs h-auto"
+                  />
+                ))}
+              </div>
+            )}
           </>
         );
       case 'doctor_notes':
