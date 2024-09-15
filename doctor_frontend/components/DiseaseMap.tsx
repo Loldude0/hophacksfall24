@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react'
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps"
 
-const Dialog = ({ patientData, onClose }) => (
+function hashStringToColor(str) {
+    let hash = 0;
+    // Compute a hash for the string
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    // Convert the hash value to a hex color code
+    let color = "#";
+    for (let i = 0; i < 3; i++) {
+        const value = (hash >> (i * 8)) & 0xFF;
+        color += ('00' + value.toString(16)).slice(-2); // Ensure 2 digits
+    }
+    return color;
+}
+
+const Dialog = ({ patientData, diagnosis, onClose }) => (
     <div className="absolute top-0 right-0 w-1/4 h-full bg-white shadow-lg p-4 overflow-y-auto">
         <button onClick={onClose} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
             Close
@@ -14,6 +29,7 @@ const Dialog = ({ patientData, onClose }) => (
                 <p><strong>Height:</strong> {patientData.height} cm</p>
                 <p><strong>Weight:</strong> {patientData.weight} kg</p>
                 <p><strong>Blood Type:</strong> {patientData.blood_type}</p>
+                <p><strong>Diagnosis:</strong> {diagnosis || 'No diagnosis available'}</p>
             </>
         ) : (
             <p>Loading patient information...</p>
@@ -26,6 +42,7 @@ export default function DiseaseMap() {
     
     const [markers, setMarkers] = useState([]);
     const [selectedPatientData, setSelectedPatientData] = useState(null);
+    const [selectedDiagnosis, setSelectedDiagnosis] = useState(null);
     const [zoom, setZoom] = useState(1);
     const [center, setCenter] = useState([78.9629, 20.5937]);
 
@@ -34,7 +51,19 @@ export default function DiseaseMap() {
             .then(response => response.json())
             .then(data => {
                 if (data.status === "ok") {
-                    setMarkers(data.addresses);
+                    // Fetch diagnosis for each patient
+                    const markerPromises = data.addresses.map(marker =>
+                        fetch(`http://localhost:5000/get_user_diagnosis?user_id=${marker.name}`)
+                            .then(response => response.json())
+                            .then(diagnosisData => ({
+                                ...marker,
+                                diagnosis: diagnosisData.status === "ok" ? diagnosisData.diagnosis : null
+                            }))
+                    );
+
+                    Promise.all(markerPromises).then(markersWithDiagnosis => {
+                        setMarkers(markersWithDiagnosis);
+                    });
                 } else {
                     console.error(data.message);
                 }
@@ -46,6 +75,7 @@ export default function DiseaseMap() {
 
     const handleMarkerClick = (marker) => {
         setSelectedPatientData(null); // Reset patient data while loading
+        setSelectedDiagnosis(marker.diagnosis);
         setZoom(5); // Adjust the zoom level as needed
         setCenter(marker.coordinates);
 
@@ -68,6 +98,7 @@ export default function DiseaseMap() {
 
     const handleCloseDialog = () => {
         setSelectedPatientData(null);
+        setSelectedDiagnosis(null);
         setZoom(1); // Reset zoom to default
         setCenter([78.9629, 20.5937]); // Reset center to default
     };
@@ -96,13 +127,22 @@ export default function DiseaseMap() {
                     </Geographies>
                     {markers.map((marker, index) => (
                         <Marker key={index} coordinates={marker.coordinates} onClick={() => handleMarkerClick(marker)}>
-                            <circle r={2} fill="#F53" stroke="#fff" strokeWidth={0} />
+                            <circle 
+                                r={2} 
+                                fill={marker.diagnosis ? hashStringToColor(marker.diagnosis) : "#F53"} 
+                                stroke="#fff" 
+                                strokeWidth={0} 
+                            />
                         </Marker>
                     ))}
                 </ComposableMap>
             </div>
             {selectedPatientData && (
-                <Dialog patientData={selectedPatientData} onClose={handleCloseDialog} />
+                <Dialog 
+                    patientData={selectedPatientData} 
+                    diagnosis={selectedDiagnosis}
+                    onClose={handleCloseDialog} 
+                />
             )}
         </div>
     )
