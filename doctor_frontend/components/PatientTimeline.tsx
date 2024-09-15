@@ -103,8 +103,9 @@ export default function PatientTimeline({ selectedPatientId }) {
       case 'user_session':
         return (
           <>
-            <p><strong>State:</strong> {JSON.stringify(event.state)}</p>
-            <p><strong>AI Notes:</strong> {event.ai_notes}</p>
+            <p><strong>Patient's Report: </strong> {JSON.stringify(event.state)}</p>
+            <p><strong>Summary:</strong> {event.summary}</p>
+            <p><strong>Disease prediction:</strong> {event.prediction}</p>
             {event.images && event.images.map((image, index) => (
               <img key={index} src={`data:image/png;base64,${image}`} alt="User session" />
             ))}
@@ -120,12 +121,12 @@ export default function PatientTimeline({ selectedPatientId }) {
         );
       case 'doctor_prescription':
         return (
-          <p><strong>Doctor's Notes:</strong> {event.doctor_note}</p>
+          <p><strong>Doctor's Prescription:</strong> {event.doctor_note}</p>
         );
       case 'more_info_request':
         return (
           <>
-            <p><strong>Doctor's Notes:</strong> {event.doctor_note}</p>
+            <p><strong>Information requested:</strong> {event.doctor_note}</p>
             <p><strong>Status:</strong> {event.status}</p>
           </>
         );
@@ -194,8 +195,8 @@ export default function PatientTimeline({ selectedPatientId }) {
               <Card className="flex-1">
                 <CardHeader>
                   <CardTitle className="flex justify-between items-center">
-                    <span>{event.activity_type}</span>
-                    <span className="text-sm font-normal text-gray-500">{new Date(event.timestamp).toLocaleDateString()}</span>
+                    <span>{event.activity_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
+                    <span className="text-sm font-normal text-gray-500">{new Date(event.timestamp).toLocaleString()}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

@@ -3,7 +3,7 @@ from flask import request
 from flask import jsonify
 from pymongo import MongoClient
 import gridfs
-from server_ai_pipeline import diagnose_patient
+from server_ai_pipeline import summarize
 from datetime import datetime
 from send_sms import send_sms
 import base64
@@ -13,6 +13,7 @@ import requests
 import os
 
 from get_patient_response import ask_for_info, extract_info, add_extra_questions
+from disease_prediction import predict
 
 app = Flask(__name__)
 client = MongoClient("mongodb://localhost:27017/")
@@ -22,9 +23,10 @@ user_info = db["user_info"]
 activity_info = db["activity_info"]
 fs = gridfs.GridFS(db)
 CORS(app)
-"""
+
 user_info_client = {
-    "temp": None,
+    "body temperature in celcius": None,
+    "Respiratory rate": None,
     "cough": None,
     "shortness of breath": None,
     "chest pain": None,
@@ -39,15 +41,11 @@ user_info_client = {
     "congestion": None,
     "runny nose": None,
     "diarrhea": None,
+    "skin rash": None,
 }
-"""
 
-user_info_client = {
-    "temp": None,
-    "cough": None,
-    "shortness of breath": None,
-    "chest pain": None,
-}
+response_storage_dict = {}
+
 
 def convert_all_images_to_base64():
     files = os.listdir("./media/images")
@@ -56,8 +54,9 @@ def convert_all_images_to_base64():
         with open(f"./media/images/{file}", "rb") as f:
             img_base64 = base64.b64encode(f.read()).decode("utf-8")
             res.append(img_base64)
-    
+
     return res
+
 
 @app.route("/get_basic_info", methods=["GET"])
 def get_basic_info():
@@ -93,15 +92,18 @@ def get_activity_info():
     if activity is None:
         return jsonify({"status": "error", "message": "Activity not found"})
     else:
-        # load images and convert them to base64
         for act in activity["activities"]:
-            if 'images' in act:
+            if "images" in act:
                 images = []
                 for image in act["images"]:
                     image_data = fs.get(image).read()
                     images.append(base64.b64encode(image_data).decode("utf-8"))
                 act["images"] = images
         activity["activities"] = activity["activities"][::-1]
+        for act in activity["activities"]:
+            for key in list(act["state"].keys()):
+                if act["state"][key] is None:
+                    del act["state"][key]
     return jsonify(activity)
 
 
@@ -121,8 +123,10 @@ def post_activity_info():
 
     if activity_type == "user_session":
         state = request.json["state"]
-        response = diagnose_patient(state)
-        request.json["ai_notes"] = response
+        responses = request.json["responses"]
+        response = summarize(responses)
+        request.json["summary"] = response
+        request.json["prediction"] = predict(state)
         if request.json["images"]:
             images = []
             for image in request.json["images"]:
@@ -186,13 +190,14 @@ def get_doctor_request():
                         "status": "ok",
                         "is_pending": True,
                         "message": ask_for_info(user_info_client),
-                        "phone_number": "12406103742"
+                        "phone_number": "12406103742",
                     }
                 )
 
     return jsonify(
         {"status": "ok", "is_pending": False, "message": "No pending request"}
     )
+
 
 @app.route("/get_user_prescription", methods=["GET"])
 def get_user_prescription():
@@ -206,12 +211,12 @@ def get_user_prescription():
         for act in activity["activities"]:
             if act["activity_type"] == "doctor_prescription":
                 prescriptions.append(act["doctor_note"])
-                
+
             return jsonify({"status": "ok", "prescriptions": prescriptions})
 
     return jsonify({"status": "error", "message": "No prescription found"})
 
-# get users latest diagnosis
+
 @app.route("/get_user_diagnosis", methods=["GET"])
 def get_user_diagnosis():
     user_id = request.args.get("user_id")
@@ -223,23 +228,26 @@ def get_user_diagnosis():
         for act in activity["activities"]:
             if act["activity_type"] == "doctor_diagnosis":
                 diagnosis = act["diagnosis"]
-                
+
             return jsonify({"status": "ok", "diagnosis": diagnosis})
 
     return jsonify({"status": "error", "message": "No diagnosis found"})
 
-# create an api endoint to get a list of all the addresses of the patients
+
 @app.route("/get_patient_addresses", methods=["GET"])
 def get_patient_addresses():
     patients = user_info.find()
     markers = []
     for patient in patients:
-        markers.append({
-            "name": patient["_id"],
-            "coordinates": patient["address"],
-        })
+        markers.append(
+            {
+                "name": patient["_id"],
+                "coordinates": patient["address"],
+            }
+        )
 
     return jsonify({"status": "ok", "addresses": markers})
+
 
 @app.route("/get_bot_response", methods=["POST"])
 @cross_origin()
@@ -249,15 +257,23 @@ def get_bot_response():
     question = data["question"]
     content = data["content"]
     file_name = data["file_name"]
-    
+
     print(request.json)
     print(response_type, question, content, file_name)
-    extract_info(
+    user_response = extract_info(
         question,
         state=user_info_client,
         response_type=response_type,
         content=content,
         file_name=file_name,
+    )
+    # save the response in the response_storage_dict
+    response_storage_dict[data["user_id"]] = (
+        response_storage_dict.get(data["user_id"], {})
+        + "question-answer pair: "
+        + question
+        + ":"
+        + user_response
     )
     print(user_info_client)
     if all([value is not None for value in user_info_client.values()]):
@@ -270,6 +286,7 @@ def get_bot_response():
                 "activity_type": "user_session",
                 "state": user_info_client,
                 "images": convert_all_images_to_base64(),
+                "responses": response_storage_dict[user_id],
             },
         )
         os.rmdir("./media")

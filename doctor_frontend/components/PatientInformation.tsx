@@ -106,7 +106,7 @@ export default function PatientInformation() {
 
       <div className="flex">
         <div className="w-1/5 pr-4">
-          <h2 className="text-xl font-semibold text-black mb-4">Patient Information</h2>
+          <h2 className="text-2xl font-semibold text-black mb-4">Patient Information</h2>
           {patientInfo ? (
             <div className="text-black space-y-2">
               <p><strong>Name:</strong> {patientInfo.name}</p>
@@ -117,7 +117,7 @@ export default function PatientInformation() {
               <p><strong>Blood Type:</strong> {patientInfo.blood_type}</p>
             </div>
           ) : (
-            <p>Loading patient information...</p>
+            <p></p>
           )}
         </div>
         <div className="w-4/5">

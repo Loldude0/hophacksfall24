@@ -54,16 +54,16 @@ def parse_response_list(response: str) -> list:
 
 def ask_for_info(state: dict) -> str:
     prompt = """
-    You are a telemedicine doctor. You are seeing a patient who is experiencing symptoms of a disease. You need to ask the patient for more information to diagnose the disease. The patient is not in front of you, so you need to ask the patient for more information.
+    You are a telemedicine doctor's helper. You are seeing a patient who is experiencing symptoms of a disease. You need to ask the patient for more information to diagnose the disease. The patient is not in front of you, so you need to ask the patient for more information.
     You currently have the following information about the patient:
     {state}
     
     "None" in the state means that the information is not available.
-    ask the patient for more information about the field with "None" in the state.
+    ask the patient for more information on what you deem necessary to diagnose the disease.
     
-    You don't need to say "Okay, I understand in the beginning". Just start asking questions.
+    You don't need to say "Okay, I understand in the beginning". Just start asking questions but be kind and guiding.
     ask questions one by one and wait for the patient's response.
-    Your role as a doctor starts now.
+    Your role as a doctor's helper starts now.
     """
     
     response = model.generate_content(prompt.format(state=state))
@@ -117,6 +117,7 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
         """
         
         response = model.generate_content([img_file, prompt.format(question=question,state=state)])
+        return None
         
     elif response_type == "text" or response_type == "audio":
         if response_type == "text":
@@ -153,6 +154,7 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
         """
 
         response = model.generate_content(prompt.format(question=question,state=state, user_response=user_response))
+        return user_response
     
     else:
         raise ValueError("Invalid response type '{}'".format(response_type))
@@ -162,7 +164,7 @@ def extract_info(question:str, state: dict, response_type: str = "text", **kwarg
 
 def add_extra_questions(question: str, user_state: dict) -> None:
     prompt = """
-    create a list of extra states to ask the patient based on the current state of the patient.
+    create a list of extra states to ask the patient based on the current state of the patient. Do not ask too many questions. Just ask what you think is necessary to diagnose the disease.
     
     current patient state:
     {state}

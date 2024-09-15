@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 export default function Sidebar({ setSelectedView }) {
   return (
     <div className="w-64 bg-white shadow-md p-4">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Navigation</h2>
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">!Decide project name!</h2>
       <div className="space-y-2">
         <Button 
           onClick={() => setSelectedView('patient-info')} 
