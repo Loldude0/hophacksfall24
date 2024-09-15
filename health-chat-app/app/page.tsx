@@ -4,6 +4,6 @@ import HealthChatInterface from '@/components/health-chat-interface';
 import UserInfoPage from './user-info/page';
 
 export default function Home() {
-  redirect('/user-info')
+  redirect('/login')
 };
 

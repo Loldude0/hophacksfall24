@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -14,6 +15,7 @@ type Message = {
 }
 
 export default function HealthChatInterface() {
+  const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([])
   const [inputText, setInputText] = useState('')
   const [isRecording, setIsRecording] = useState(false)
@@ -181,13 +183,15 @@ export default function HealthChatInterface() {
     }
   }
 
-
   //initialize the chat
   getDoctorRequest();
 
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background">
-      <header className="bg-primary text-primary-foreground p-4 text-center">
+      <header className="bg-primary text-primary-foreground p-4 text-center flex justify-between items-center">
+        <Button variant="ghost" onClick={() => router.push('/')}>
+          Back
+        </Button>
         <h1 className="text-2xl font-bold">Health Chat</h1>
       </header>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
