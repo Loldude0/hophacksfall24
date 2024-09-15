@@ -61,8 +61,8 @@ export default function PatientTimeline({ selectedPatientId }) {
       for (const event of timelineEvents) {
         if (event.activity_type === 'user_session' && !predictionData[event.id]) {
           try {
-            const response = await fetch(`http://localhost:5000/get_prediction`)
-            const data = await response.json()
+            console.log(event)
+            const data = event.prediction
             newPredictionData[event.id] = data
           } catch (error) {
             console.error('Error fetching prediction:', error)
@@ -134,9 +134,13 @@ export default function PatientTimeline({ selectedPatientId }) {
       case 'user_session':
         return (
           <>
-            <p><strong>Patient's Report: </strong> {JSON.stringify(event.state)}</p>
-            <p><strong>Summary:</strong> {event.summary}</p>
-            <p><strong>Disease prediction:</strong> {event.prediction}</p>
+            <p><strong>Patient's Report: </strong> {
+              Object.entries(event.state)
+                .filter(([key, value]) => value !== false && value !== null)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join(', ')
+            }</p>
+            
             {event.images && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {event.images.map((image, index) => (
@@ -149,12 +153,17 @@ export default function PatientTimeline({ selectedPatientId }) {
                 ))}
               </div>
             )}
-            {predictionData[event.id] && (
-              <PieChart
-                series={[predictionData[event.id]]}
-                width={400}
-                height={400}
-              />
+            <p><strong>Summary:</strong> {event.summary}</p>
+            <p><strong>Disease prediction:</strong> }</p>
+            {event.prediction && (
+              console.log(event.prediction),
+              <div className="">
+                <PieChart
+                  series={[event.prediction]}
+                  width={600}
+                  height={250}
+                />
+              </div>
             )}
           </>
         );
@@ -194,7 +203,7 @@ export default function PatientTimeline({ selectedPatientId }) {
       
       {showAddActivityForm && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"> /* TODO: fix this later*/
-            <div className="bg-white p-8 rounded-lg shadow-lg">
+            <div className="bg-white w-1/2 h-2/7 p-8 rounded-lg shadow-lg">
               <h2 className="text-xl font-semibold text-black mb-4">Add Activity</h2>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-black">Activity Type</label>

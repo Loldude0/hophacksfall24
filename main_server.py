@@ -32,8 +32,8 @@ user_info_client = {
     "cough": None,
     "shortness of breath": False,
     "chest pain": None,
-    "fatigue": True,
-    "headache": False,
+    "fatigue": None,
+    "headache": None,
     "nausea": True,
     "body aches": True,
     "dizziness": False,
@@ -45,6 +45,16 @@ user_info_client = {
     "diarrhea": None,
     "skin rash": True,
 }
+
+classes = [
+        "Covid-19",
+        "Bronchitis",
+        "Influenza",
+        "Migraine",
+        "Tuberculosis",
+        "Meningitis",
+        "Legionnaires' Disease",
+]
 
 response_storage_dict = defaultdict(str)
 response_storage_lock = Lock()
@@ -114,6 +124,7 @@ def get_activity_info():
 
 @app.route("/post_activity_info", methods=["POST"])
 def post_activity_info():
+    print(request.json)
     user_id = request.json["user_id"]
     activity_type = request.json["activity_type"]
     activity = activity_info.find_one({"_id": user_id})
@@ -127,11 +138,15 @@ def post_activity_info():
     user_number = user_info.find_one({"_id": user_id})["phone_number"]
 
     if activity_type == "user_session":
+        eps = 1e-3
         state = request.json["state"]
         responses = request.json["responses"]
-        response = summarize(responses)
-        request.json["summary"] = response
-        request.json["prediction"] = predict(state)
+        # print(responses)
+        # response = summarize(responses)
+        # request.json["summary"] = response
+        # prediction = predict(state)
+        # print({"data": [{"id":i, "value": prediction[i], "label": classes[i]} for i in range(7) if prediction[i] > eps]})
+        # request.json["prediction"] = {"data": [{"id":i, "value": prediction[i], "label": classes[i]} for i in range(7) if prediction[i] > eps]}
         if request.json["images"]:
             images = []
             for image in request.json["images"]:
@@ -194,7 +209,7 @@ def get_doctor_request():
                     {
                         "status": "ok",
                         "is_pending": True,
-                        "message": ask_for_info(user_info_client),
+                        "message": ask_for_info(user_info_client, doctor_note),
                         "phone_number": "12406103742",
                     }
                 )
@@ -252,6 +267,7 @@ def get_patient_addresses():
     patients = user_info.find()
     markers = []
     for patient in patients:
+        print(patient)
         markers.append(
             {
                 "name": patient["_id"],
@@ -263,6 +279,7 @@ def get_patient_addresses():
 
 
 @cross_origin()
+@app.route("/get_bot_response", methods=["POST"])
 def get_bot_response():
     data = request.json
 
@@ -270,7 +287,7 @@ def get_bot_response():
     if not all(key in data for key in required_keys):
         return jsonify({"status": "error", "message": "Missing required data"}), 400
 
-    user_id = str(data.get("user_id", ""))
+    user_id = data["user_id"]
     if not user_id:
         return jsonify({"status": "error", "message": "Invalid user ID"}), 400
 
@@ -279,52 +296,36 @@ def get_bot_response():
     content = data["content"]
     file_name = data["file_name"]
 
-    print(request.json)
-    print(response_type, question, content, file_name)
+    user_response = extract_info(
+        question,
+        state=user_info_client,
+        response_type=response_type,
+        content=content,
+        file_name=file_name,
+    )
 
-    try:
-        user_response = extract_info(
-            question,
-            state=user_info_client,
-            response_type=response_type,
-            content=content,
-            file_name=file_name,
+    with response_storage_lock:
+        response_storage_dict[
+            user_id
+        ] += f"question-answer pair: {question}:{user_response}\n"
+
+    if all([value is not None for value in user_info_client.values()]):
+        requests.post(
+            "http://localhost:5000/post_activity_info",
+            json={
+                "user_id": user_id,
+                "activity_type": "user_session",
+                "state": user_info_client,
+                "images": convert_all_images_to_base64(),
+                "responses": response_storage_dict[user_id],
+            },
         )
+        
+        
 
-        with response_storage_lock:
-            response_storage_dict[
-                user_id
-            ] += f"question-answer pair: {question}:{user_response}\n"
-
-        print(user_info_client)
-
-        if all([value is not None for value in user_info_client.values()]):
-            requests.post(
-                "http://localhost:5000/post_activity_info",
-                json={
-                    "user_id": user_id,
-                    "activity_type": "user_session",
-                    "state": user_info_client,
-                    "images": convert_all_images_to_base64(),
-                    "responses": response_storage_dict[user_id],
-                },
-            )
-            os.rmdir("./media")
-            return jsonify({"status": "done", "message": "All information extracted"})
-        else:
-            return jsonify({"status": "ok", "message": ask_for_info(user_info_client)})
-
-    except Exception as e:
-        print(f"Error in get_bot_response: {e}")
-        return (
-            jsonify(
-                {
-                    "status": "error",
-                    "message": "An error occurred processing your request",
-                }
-            ),
-            500,
-        )
+        return jsonify({"status": "done", "message": "All information extracted"})
+    else:
+        return jsonify({"status": "ok", "message": ask_for_info(user_info_client, None)})
 
 
 @app.route("/search_patient", methods=["GET"])
@@ -349,7 +350,7 @@ def get_prediction():
     input_data = list(user_info_client.values())
     for i in range(len(input_data)):
         if input_data[i] is None:
-            input_data[i] = 0
+            input_data[i] = 0.5
 
     prediction = predict(input_data)
     series = {"data": []}
@@ -363,9 +364,12 @@ def get_prediction():
         "Meningitis",
         "Legionnaires' Disease",
     ]
+    print(prediction)
+    eps = 1e-6
     for i in range(len(prediction)):
-        series["data"].append(
-            {"id": i, "value": prediction[i].item(), "label": classes[i]}
+        if prediction[i] > eps:
+            series["data"].append(
+                {"id": i, "value": prediction[i], "label": classes[i]}
         )
 
     return jsonify(series)

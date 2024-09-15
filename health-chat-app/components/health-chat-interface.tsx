@@ -27,9 +27,8 @@ export default function HealthChatInterface() {
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    const userInfo = localStorage.getItem('userInfo')
-    if (userInfo) {
-      const { userId } = JSON.parse(userInfo)
+    const userId = localStorage.getItem('user_id')
+    if (userId) {
       setUserId(userId)
     }
   }, [])
@@ -80,7 +79,7 @@ export default function HealthChatInterface() {
           sender: 'system',
         }
         setMessages(prev => [...prev, newMessage])
-        setPrevResponse(data.message)
+        setPrevResponse("Please provide information about your symptoms")
       }
     } catch (error) {
       console.error('Error fetching doctor request:', error)
@@ -197,7 +196,7 @@ export default function HealthChatInterface() {
         <Button variant="ghost" onClick={() => router.push('/')}>
           Back
         </Button>
-        <h1 className="text-2xl font-bold">Health Chat</h1>
+        <h1 className="text-2xl font-bold">DocReach</h1>
       </header>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (

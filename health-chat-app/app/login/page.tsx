@@ -97,8 +97,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Login to Health Chat</CardTitle>
-          <CardDescription>Enter your credentials to access Health Chat</CardDescription>
+          <CardTitle>Login to DocReach</CardTitle>
+          <CardDescription>Enter your credentials to access DocReach</CardDescription>
         </CardHeader>
         <CardContent>
           {error && <div className="text-red-500 mb-4">{error}</div>}
