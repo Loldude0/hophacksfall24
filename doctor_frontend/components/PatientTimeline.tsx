@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Circle } from 'lucide-react'
+import { PieChart } from '@mui/x-charts/PieChart';
 
 export default function PatientTimeline({ selectedPatientId }) {
   const [timelineEvents, setTimelineEvents] = useState([])
@@ -111,14 +112,27 @@ export default function PatientTimeline({ selectedPatientId }) {
                 {event.images.map((image, index) => (
                   <img 
                     key={index} 
-                    src={`data:image/png;base64,${image}`} 
+                    src={`data:image/png;base64,${image}`}
                     alt={`User session image ${index + 1}`}
                     className="max-w-xs h-auto"
                   />
                 ))}
               </div>
             )}
-          </>
+            {
+              fetch(`http://localhost:5000/get_prediction`)
+              .then(response => response.json())
+              .then(data => {
+                <PieChart
+                  series = {[
+                    data
+                  ]}
+                  width = {400}
+                  height = {400}
+                />
+              })
+            }
+        </>
         );
       case 'doctor_notes':
         return (

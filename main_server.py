@@ -11,6 +11,7 @@ from flask_cors import CORS, cross_origin
 from bson.objectid import ObjectId
 import requests
 import os
+from disease_prediction import predict
 
 from get_patient_response import ask_for_info, extract_info, add_extra_questions
 from disease_prediction import predict
@@ -26,22 +27,22 @@ CORS(app)
 
 user_info_client = {
     "body temperature in celcius": None,
-    "Respiratory rate": None,
+    "Respiratory rate": 20,
     "cough": None,
-    "shortness of breath": None,
+    "shortness of breath": False,
     "chest pain": None,
-    "fatigue": None,
-    "headache": None,
-    "nausea": None,
-    "body aches": None,
-    "dizziness": None,
-    "loss of taste": None,
+    "fatigue": True,
+    "headache": False,
+    "nausea": True,
+    "body aches": True,
+    "dizziness": False,
+    "loss of taste": False,
     "loss of smell": None,
     "sore throat": None,
-    "congestion": None,
+    "congestion": False,
     "runny nose": None,
     "diarrhea": None,
-    "skin rash": None,
+    "skin rash": True,
 }
 
 response_storage_dict = {}
@@ -313,5 +314,20 @@ def search_patient():
 
     return jsonify({"status": "success", "patients": patient_list})
 
+@app.route("/get_prediction", methods=["POST"])
+def get_prediction():
+    input_data = user_info_client.values()
+    for i in range(len(input_data)):
+        if input_data[i] is None:
+            input_data[i] = 0
+    
+    prediction = predict(input_data)
+    series = {"data": []}
+    
+    classes = ["Covid-19", "Bronchitis", "Influenza", "Migraine", "Tuberculosis", "Meningitis", "Legionnaires' Disease"]
+    for i in range(len(prediction)):
+        series["data"].append({"id": i, "value": prediction[i].item(), "label": classes[i]})
 
+    return jsonify(series)
+    
 app.run(port=5000, debug=True)
